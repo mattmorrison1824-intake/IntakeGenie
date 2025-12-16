@@ -59,10 +59,15 @@ export async function GET(request: NextRequest) {
         // Generate TTS with Deepgram Aura (MP3)
         audioBuffer = await generateTTS(text);
         
-        // Cache the result (limit cache size to prevent memory issues)
-        if (audioCache.size < 100) {
-          audioCache.set(cacheKey, audioBuffer);
+        // Always cache the result (increased cache size for better hit rate)
+        // LRU eviction: remove oldest entry if cache is full
+        if (audioCache.size >= 500) {
+          const firstKey = audioCache.keys().next().value;
+          if (firstKey !== undefined) {
+            audioCache.delete(firstKey);
+          }
         }
+        audioCache.set(cacheKey, audioBuffer);
       } catch (error) {
         console.error('[Deepgram TTS] Error generating audio:', error);
         // Return 404 so Twilio will skip this Play and continue

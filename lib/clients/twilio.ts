@@ -106,31 +106,18 @@ export function triggerSpeculativeTTS(
     return; // Skip if not configured
   }
 
-  // Format phone numbers
+  // Format phone numbers and trigger TTS generation in background
   import('@/lib/utils/phone-tts').then(({ formatTextWithPhoneNumbers }) => {
     const formattedText = formatTextWithPhoneNumbers(text);
     const encodedText = encodeURIComponent(formattedText);
     const audioUrl = `${appUrl}/api/audio?callSid=${encodeURIComponent(callSid)}&turn=${encodeURIComponent(turn)}&text=${encodedText}`;
 
     // Fire and forget - trigger generation in background
-    fetch(audioUrl).catch((err) => {
+    fetch(audioUrl).catch(() => {
       // Silently fail - this is just speculative
-      console.log('[Speculative TTS] Background generation triggered (errors ignored)');
     });
   }).catch(() => {
     // Ignore errors in speculative generation
   });
-}
-
-/**
- * Get filler phrase audio URL (pre-cached, always fast)
- */
-export async function getFillerPhraseUrl(
-  callSid: string
-): Promise<{ playUrl: string | null; fallbackText: string }> {
-  const { getFillerPhrase } = await import('@/lib/utils/filler-phrases');
-  const fillerText = getFillerPhrase();
-  // Use 'filler' as turn identifier so it's consistently cached
-  return getTTSAudioUrl(fillerText, callSid, 'filler');
 }
 

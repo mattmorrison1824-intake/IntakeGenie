@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTwiML, normalizeAppUrl, getTTSAudioUrl, getFillerPhraseUrl, triggerSpeculativeTTS } from '@/lib/clients/twilio';
+import { generateTwiML, normalizeAppUrl, getTTSAudioUrl, triggerSpeculativeTTS } from '@/lib/clients/twilio';
 import { createServiceClient } from '@/lib/clients/supabase';
 import { processAgentTurn } from '@/lib/clients/openai';
 import { ConversationState, IntakeData } from '@/types';
@@ -115,27 +115,6 @@ export async function POST(request: NextRequest) {
         .eq('twilio_call_sid', callSid);
     }
 
-    const response = new twiml.VoiceResponse();
-
-    // Add immediate filler phrase to eliminate dead air (non-blocking)
-    try {
-      const { playUrl: fillerUrl, fallbackText: fillerFallback } = await getFillerPhraseUrl(callSid);
-      if (fillerUrl) {
-        response.play(fillerUrl);
-      } else {
-        response.say({ voice: 'alice' }, fillerFallback);
-      }
-    } catch (error) {
-      // Fallback to simple filler if TTS fails
-      response.say({ voice: 'alice' }, 'One moment.');
-    }
-
-    // Trigger speculative TTS generation in background for next response (non-blocking)
-    if (!agentResponse.done) {
-      // Predict likely next response text (simple heuristic)
-      triggerSpeculativeTTS("Thanks. Let me ask you something.", callSid, `${state.history.length + 1}`);
-    }
-
     // Override closing script with exact required text
     let responseText = agentResponse.assistant_say;
     if (agentResponse.next_state === 'CLOSE' || agentResponse.done) {
@@ -143,20 +122,43 @@ export async function POST(request: NextRequest) {
       responseText = `Thank you. I've shared this information with the firm. Someone from ${firmNameText} will review it and contact you within one business day. If this becomes urgent or you feel unsafe, please call 911. Take care.`;
     }
 
-    // Say the assistant's response - use premium TTS with Deepgram Aura (MP3)
+    // PRE-GENERATE TTS immediately to reduce latency
+    // This ensures audio is cached before Twilio requests it
+    const turnNumber = state.history.length.toString();
+    const { formatTextWithPhoneNumbers } = await import('@/lib/utils/phone-tts');
+    const formattedText = formatTextWithPhoneNumbers(responseText);
+    
+    // Generate TTS immediately in parallel (fire and forget)
+    const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (appUrl && process.env.DEEPGRAM_API_KEY) {
+      const encodedText = encodeURIComponent(formattedText);
+      const audioUrl = `${appUrl}/api/audio?callSid=${encodeURIComponent(callSid)}&turn=${encodeURIComponent(turnNumber)}&text=${encodedText}`;
+      // Trigger TTS generation immediately - don't await, just fire it
+      fetch(audioUrl).catch(() => {
+        // Ignore errors - this is just pre-generation
+      });
+    }
+
+    // Trigger speculative TTS for likely next response (if continuing)
+    if (!agentResponse.done) {
+      triggerSpeculativeTTS("Thanks. Let me ask you something.", callSid, `${state.history.length + 1}`);
+    }
+
+    const response = new twiml.VoiceResponse();
+
+    // Use the audio URL - it should be cached by now or will be soon
     try {
-      // Use turn number based on conversation history length for unique cache keys
-      const turnNumber = state.history.length.toString();
       const { playUrl, fallbackText } = await getTTSAudioUrl(responseText, callSid, turnNumber);
       console.log('[Gather] Play URL:', playUrl);
       if (playUrl) {
         response.play(playUrl);
       } else {
-        // Fallback to Twilio TTS
+        // Fallback to Twilio TTS (instant, no latency)
         response.say({ voice: 'alice' }, fallbackText);
       }
     } catch (error) {
       console.error('[Gather] TTS error, using fallback:', error);
+      // Use Twilio TTS as fallback (instant)
       response.say({ voice: 'alice' }, responseText);
     }
 

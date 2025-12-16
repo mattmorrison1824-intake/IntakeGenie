@@ -6,6 +6,9 @@ import { PlatformLayout } from '@/components/platform-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function CallsPage({
   searchParams,
 }: {

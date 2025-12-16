@@ -4,6 +4,9 @@ import SettingsForm from '@/components/SettingsForm';
 import { PlatformLayout } from '@/components/platform-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   const supabase = await createServerClient();
   const {

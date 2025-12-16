@@ -5,6 +5,9 @@ import CallDetail from '@/components/CallDetail';
 import { PlatformLayout } from '@/components/platform-layout';
 import { Button } from '@/components/ui/button';
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function CallDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerClient();
   const {

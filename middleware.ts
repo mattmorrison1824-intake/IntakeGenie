@@ -81,9 +81,9 @@ export const config = {
      * - api/twilio (Twilio webhooks - must be public, completely excluded from middleware)
      * - public folder
      * 
-     * Note: The negative lookahead excludes paths starting with these patterns
+     * Note: We use a negative lookahead at the start to exclude /api/twilio paths
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|api/twilio/|api/twilio$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '^/(?!api/twilio)((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
 

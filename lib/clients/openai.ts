@@ -2,6 +2,23 @@ import OpenAI from 'openai';
 import { ConversationState, IntakeData, AgentResponse } from '@/types';
 import { SYSTEM_PROMPT, DEVELOPER_INSTRUCTIONS, STATE_DESCRIPTIONS } from '@/lib/agent/prompts';
 
+/**
+ * Get tone-specific instructions based on AI tone setting
+ */
+function getToneInstructions(tone: string): string {
+  switch (tone) {
+    case 'warm':
+      return '\n\nTone guidance: Be warm, empathetic, and personable. Use friendly language while maintaining professionalism.';
+    case 'friendly':
+      return '\n\nTone guidance: Be conversational and approachable. Use natural, friendly language.';
+    case 'formal':
+      return '\n\nTone guidance: Be reserved, respectful, and formal. Use more structured language.';
+    case 'professional':
+    default:
+      return '\n\nTone guidance: Be calm, clear, and businesslike. Maintain professional standards.';
+  }
+}
+
 const apiKey = process.env.OPENAI_API_KEY;
 
 if (!apiKey) {
@@ -17,21 +34,38 @@ export interface ConversationContext {
   filled: Partial<IntakeData>;
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
   firmName?: string | null;
+  aiTone?: string;
+  aiKnowledgeBase?: string | null;
 }
 
 export async function processAgentTurn(
   context: ConversationContext,
   userUtterance: string
 ): Promise<AgentResponse> {
-  const firmNameContext = context.firmName ? `\n\nFirm name: ${context.firmName}` : '';
+  // Build context from firm settings
+  const contextParts: string[] = [];
+  if (context.firmName) {
+    contextParts.push(`Firm name: ${context.firmName}`);
+  }
+  if (context.aiTone) {
+    contextParts.push(`Tone: ${context.aiTone}`);
+  }
+  if (context.aiKnowledgeBase) {
+    contextParts.push(`Firm knowledge base: ${context.aiKnowledgeBase}`);
+  }
+  const firmContext = contextParts.length > 0 ? `\n\n${contextParts.join('\n')}` : '';
+
+  // Adjust tone instructions based on setting
+  const toneInstructions = getToneInstructions(context.aiTone || 'professional');
+
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: SYSTEM_PROMPT + '\n\n' + DEVELOPER_INSTRUCTIONS + firmNameContext,
+      content: SYSTEM_PROMPT + '\n\n' + DEVELOPER_INSTRUCTIONS + toneInstructions + firmContext,
     },
     {
       role: 'system',
-      content: `Current state: ${context.state}\nState description: ${STATE_DESCRIPTIONS[context.state] || ''}\nFields collected so far: ${JSON.stringify(context.filled)}${firmNameContext}`,
+      content: `Current state: ${context.state}\nState description: ${STATE_DESCRIPTIONS[context.state] || ''}\nFields collected so far: ${JSON.stringify(context.filled)}${firmContext}`,
     },
     ...context.conversationHistory.map((msg) => ({
       role: msg.role,

@@ -1,6 +1,8 @@
 import { createServerClient } from '@/lib/clients/supabase';
 import { redirect } from 'next/navigation';
 import SettingsForm from '@/components/SettingsForm';
+import AIReceptionistSettings from '@/components/AIReceptionistSettings';
+import AIFirmKnowledgebase from '@/components/AIFirmKnowledgebase';
 import { PlatformLayout } from '@/components/platform-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -45,13 +47,49 @@ export default async function SettingsPage() {
             </p>
           </div>
 
-          <div 
-            className="bg-white rounded-xl shadow-sm p-6 md:p-8"
-            style={{
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-            }}
-          >
-            <SettingsForm firm={firm} onSave={refreshData} />
+          <div className="space-y-6">
+            <div 
+              className="bg-white rounded-xl shadow-sm p-6 md:p-8"
+              style={{
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <SettingsForm firm={firm} onSave={refreshData} />
+            </div>
+
+            <div 
+              className="bg-white rounded-xl shadow-sm p-6 md:p-8"
+              style={{
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold tracking-tight mb-2" style={{ color: '#0B1F3B' }}>
+                  AI Receptionist Settings
+                </h2>
+                <p className="text-sm" style={{ color: '#4A5D73' }}>
+                  Customize how your AI receptionist interacts with callers
+                </p>
+              </div>
+              <AIReceptionistSettings firm={firm} onSave={refreshData} />
+            </div>
+
+            <div 
+              className="bg-white rounded-xl shadow-sm p-6 md:p-8"
+              style={{
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold tracking-tight mb-2" style={{ color: '#0B1F3B' }}>
+                  AI Firm Knowledge Base
+                </h2>
+                <p className="text-sm" style={{ color: '#4A5D73' }}>
+                  Provide context about your firm to help the AI assist callers effectively
+                </p>
+              </div>
+              <AIFirmKnowledgebase firm={firm} onSave={refreshData} />
+            </div>
           </div>
         </div>
       </div>

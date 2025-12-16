@@ -8,6 +8,8 @@ export type UrgencyLevel = 'normal' | 'high' | 'emergency_redirected';
 
 export type RouteReason = 'after_hours' | 'no_answer' | 'manual_test';
 
+export type AITone = 'professional' | 'warm' | 'friendly' | 'formal';
+
 export interface Firm {
   id: string;
   owner_user_id: string;
@@ -21,6 +23,9 @@ export interface Firm {
   close_time: string; // "17:00"
   failover_ring_seconds: number;
   twilio_number: string | null;
+  ai_greeting_custom: string | null;
+  ai_tone: AITone;
+  ai_knowledge_base: string | null;
   created_at: string;
 }
 

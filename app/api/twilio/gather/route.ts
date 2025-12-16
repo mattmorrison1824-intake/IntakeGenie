@@ -46,18 +46,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // Fetch firm name for closing script
+    // Fetch firm data for AI context
     let firmName: string | null = null;
+    let aiTone: string | null = null;
+    let aiKnowledgeBase: string | null = null;
     if (firmId) {
       try {
         const { data: firmData } = await supabase
           .from('firms')
-          .select('firm_name')
+          .select('firm_name, ai_tone, ai_knowledge_base')
           .eq('id', firmId)
           .single();
         firmName = (firmData as any)?.firm_name || null;
+        aiTone = (firmData as any)?.ai_tone || 'professional';
+        aiKnowledgeBase = (firmData as any)?.ai_knowledge_base || null;
       } catch (error) {
-        console.error('[Gather] Error fetching firm name:', error);
+        console.error('[Gather] Error fetching firm data:', error);
       }
     }
 
@@ -85,18 +89,24 @@ export async function POST(request: NextRequest) {
         filled: state.filled,
         conversationHistory: state.history,
         firmName: firmName,
+        aiTone: aiTone || 'professional',
+        aiKnowledgeBase: aiKnowledgeBase,
       },
       userUtterance || 'Hello'
     );
 
-    // Update state
+    // Override closing script with exact required text
+    let responseText = agentResponse.assistant_say;
+    if (agentResponse.next_state === 'CLOSE' || agentResponse.done) {
+      const firmNameText = firmName || 'the firm';
+      responseText = `Thank you. I've shared this information with the firm. Someone from ${firmNameText} will review it and contact you within one business day. If this becomes urgent or you feel unsafe, please call 911. Take care.`;
+    }
+
+    // Update state AFTER determining response text
     state.state = agentResponse.next_state;
     state.filled = { ...state.filled, ...agentResponse.updates };
-    // Use the response text (which may be overridden for CLOSE state)
-    const actualResponseText = (agentResponse.next_state === 'CLOSE' || agentResponse.done) 
-      ? (firmName ? `Thank you. I've shared this information with the firm. Someone from ${firmName} will review it and contact you within one business day. If this becomes urgent or you feel unsafe, please call 911. Take care.` : agentResponse.assistant_say)
-      : agentResponse.assistant_say;
-    state.history.push({ role: 'assistant', content: actualResponseText });
+    // Add assistant response to history (use actual responseText that will be played)
+    state.history.push({ role: 'assistant', content: responseText });
 
     // Persist intake_json to database
     if (Object.keys(agentResponse.updates).length > 0) {
@@ -115,16 +125,10 @@ export async function POST(request: NextRequest) {
         .eq('twilio_call_sid', callSid);
     }
 
-    // Override closing script with exact required text
-    let responseText = agentResponse.assistant_say;
-    if (agentResponse.next_state === 'CLOSE' || agentResponse.done) {
-      const firmNameText = firmName || 'the firm';
-      responseText = `Thank you. I've shared this information with the firm. Someone from ${firmNameText} will review it and contact you within one business day. If this becomes urgent or you feel unsafe, please call 911. Take care.`;
-    }
-
     // PRE-GENERATE TTS immediately to reduce latency
-    // This ensures audio is cached before Twilio requests it
-    const turnNumber = state.history.length.toString();
+    // Use a unique turn number based on current state and history length to avoid collisions
+    // This ensures each response gets a unique cache key
+    const turnNumber = `${state.state}-${state.history.length}`;
     const { formatTextWithPhoneNumbers } = await import('@/lib/utils/phone-tts');
     const formattedText = formatTextWithPhoneNumbers(responseText);
     
@@ -139,10 +143,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Trigger speculative TTS for likely next response (if continuing)
-    if (!agentResponse.done) {
-      triggerSpeculativeTTS("Thanks. Let me ask you something.", callSid, `${state.history.length + 1}`);
-    }
+    // Don't trigger speculative TTS - it was causing issues with caching
 
     const response = new twiml.VoiceResponse();
 

@@ -6,8 +6,6 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     remotePatterns: [],
   },
-  // Ensure static pages can be generated properly
-  output: undefined,
 };
 
 export default nextConfig;

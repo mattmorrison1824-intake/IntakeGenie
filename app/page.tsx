@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function LandingPage() {
+function LandingPageContent() {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #F5F7FA, #ffffff, #F5F7FA)' }}>
       {/* Navigation */}
@@ -597,5 +598,19 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, #F5F7FA, #ffffff, #F5F7FA)' }}>
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2" style={{ color: '#0B1F3B' }}>Loading...</div>
+        </div>
+      </div>
+    }>
+      <LandingPageContent />
+    </Suspense>
   );
 }

@@ -74,9 +74,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in status callback:', error);
-    return new NextResponse('Error', { 
-      status: 500,
+    // Return 200 OK even on error to prevent Twilio retries
+    // Per Twilio docs: respond quickly with 2xx status
+    return new NextResponse('OK', { 
+      status: 200,
       headers: {
+        'Content-Type': 'text/plain',
         'Access-Control-Allow-Origin': '*',
       },
     });

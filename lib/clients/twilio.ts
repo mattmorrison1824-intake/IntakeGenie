@@ -1,4 +1,5 @@
 import twilio from 'twilio';
+import { NextResponse } from 'next/server';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -33,10 +34,11 @@ export const twilioClient = new Proxy({} as ReturnType<typeof twilio>, {
 export const twilioNumber = process.env.TWILIO_NUMBER;
 
 // TwiML response helpers
-export function generateTwiML(xml: string): Response {
-  return new Response(xml, {
+export function generateTwiML(xml: string): NextResponse {
+  return new NextResponse(xml, {
+    status: 200,
     headers: {
-      'Content-Type': 'text/xml',
+      'Content-Type': 'text/xml; charset=utf-8',
     },
   });
 }

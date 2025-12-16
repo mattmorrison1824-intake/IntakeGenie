@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   title: "IntakeGenie - Legal Intake Voice Agent",
   description: "After-hours and no-answer legal intake voice agent for law firms",
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/icon.png',
+    apple: '/icon.png',
   },
 };
 

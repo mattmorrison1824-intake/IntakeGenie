@@ -1,8 +1,23 @@
 // This endpoint is for Media Streams (future enhancement)
 // For MVP, we use Gather instead, so this is a placeholder
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { generateTwiML } from '@/lib/clients/twilio';
 import { twiml } from 'twilio';
+
+// Ensure this route is public (no authentication required)
+export const dynamic = 'force-dynamic';
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
 export async function GET(request: NextRequest) {
   // For MVP, redirect to gather-based flow

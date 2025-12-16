@@ -1,14 +1,40 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/clients/supabase';
+
+// Ensure this route is public (no authentication required)
+export const dynamic = 'force-dynamic';
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Log incoming request for debugging
+    console.log('[Twilio Status] Received status callback');
+    
     const formData = await request.formData();
     const callSid = formData.get('CallSid') as string;
     const callStatus = formData.get('CallStatus') as string;
 
+    console.log('[Twilio Status] CallSid:', callSid, 'Status:', callStatus);
+
     if (!callSid) {
-      return new Response('Missing CallSid', { status: 400 });
+      console.error('[Twilio Status] Missing CallSid');
+      return new NextResponse('Missing CallSid', { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
     const supabase = createServiceClient();
@@ -38,10 +64,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return new Response('OK', { status: 200 });
+    return new NextResponse('OK', { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   } catch (error) {
     console.error('Error in status callback:', error);
-    return new Response('Error', { status: 500 });
+    return new NextResponse('Error', { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 }
 

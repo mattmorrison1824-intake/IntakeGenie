@@ -1,8 +1,23 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/clients/supabase';
 import { generateTwiML, twilioNumber } from '@/lib/clients/twilio';
 import { isBusinessHoursOpen } from '@/lib/utils/business-hours';
 import { twiml } from 'twilio';
+
+// Ensure this route is public (no authentication required)
+export const dynamic = 'force-dynamic';
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {

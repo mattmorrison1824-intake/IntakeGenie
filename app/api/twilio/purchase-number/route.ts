@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/clients/supabase';
+import { normalizeAppUrl } from '@/lib/clients/twilio';
 import twilio from 'twilio';
 
 export async function POST(request: NextRequest) {
@@ -52,16 +53,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Purchase a US phone number
-    let appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!appUrl) {
       return NextResponse.json(
         { error: 'NEXT_PUBLIC_APP_URL not configured' },
         { status: 500 }
       );
     }
-
-    // Normalize URL: remove trailing slash to prevent double slashes
-    appUrl = appUrl.replace(/\/+$/, '');
 
     // Twilio requires HTTPS URLs (except for localhost in some cases)
     // Convert http://localhost to https for Twilio, or require HTTPS

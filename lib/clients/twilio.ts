@@ -33,6 +33,12 @@ export const twilioClient = new Proxy({} as ReturnType<typeof twilio>, {
 
 export const twilioNumber = process.env.TWILIO_NUMBER;
 
+// Normalize app URL to prevent double slashes
+export function normalizeAppUrl(url: string | undefined): string {
+  if (!url) return '';
+  return url.replace(/\/+$/, '');
+}
+
 // TwiML response helpers
 export function generateTwiML(xml: string): NextResponse {
   return new NextResponse(xml, {

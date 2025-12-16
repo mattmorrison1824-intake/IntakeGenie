@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/clients/supabase';
-import { generateTwiML, twilioNumber } from '@/lib/clients/twilio';
+import { generateTwiML, twilioNumber, normalizeAppUrl } from '@/lib/clients/twilio';
 import { isBusinessHoursOpen } from '@/lib/utils/business-hours';
 import { twiml } from 'twilio';
 
@@ -103,13 +103,13 @@ export async function POST(request: NextRequest) {
     if (!isOpen && (firm.mode === 'after_hours' || firm.mode === 'both')) {
       // After hours - route directly to agent
       // Use redirect to stream endpoint which handles Gather flow
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       response.redirect(
         `${appUrl}/api/twilio/stream?callSid=${callSid}&firmId=${firm.id}`
       );
     } else if (isOpen && (firm.mode === 'failover' || firm.mode === 'both')) {
       // Business hours - try to forward, with failover to agent
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       const dial = response.dial({
         timeout: firm.failover_ring_seconds,
         action: `${appUrl}/api/twilio/failover?firmId=${firm.id}&callSid=${callSid}`,

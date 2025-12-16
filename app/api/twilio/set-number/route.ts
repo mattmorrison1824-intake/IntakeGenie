@@ -90,16 +90,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Get app URL for webhook configuration
-      let appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       if (!appUrl) {
         return NextResponse.json(
           { error: 'NEXT_PUBLIC_APP_URL not configured' },
           { status: 500 }
         );
       }
-
-      // Normalize URL: remove trailing slash to prevent double slashes
-      appUrl = appUrl.replace(/\/+$/, '');
 
       // Configure webhooks for the number
       // Note: For localhost HTTP, Twilio may reject it, but we'll try anyway

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/clients/supabase';
+import { normalizeAppUrl } from '@/lib/clients/twilio';
 
 // Ensure this route is public (no authentication required)
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       const call = callData as any;
       if (call && (call.status === 'in_progress' || call.status === 'transcribing')) {
         // Trigger async processing (fire and forget)
-        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+        const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
         fetch(`${appUrl}/api/process-call?callSid=${callSid}`, {
           method: 'POST',
         }).catch((err) => console.error('Error triggering process-call:', err));

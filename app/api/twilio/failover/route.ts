@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTwiML } from '@/lib/clients/twilio';
+import { generateTwiML, normalizeAppUrl } from '@/lib/clients/twilio';
 import { createServiceClient } from '@/lib/clients/supabase';
 import { twiml } from 'twilio';
 
@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
         // @ts-ignore - Supabase type inference issue
         .eq('twilio_call_sid', callSid);
 
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       response.redirect(
         `${appUrl}/api/twilio/stream?callSid=${callSid}&firmId=${firmId}&routeReason=no_answer`
       );
     } else {
       response.say({ voice: 'alice' }, 'Please hold while I connect you.');
       const connect = response.connect();
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       connect.stream({
         url: `${appUrl}/api/twilio/stream?callSid=${callSid || ''}&firmId=${firmId || ''}`,
       });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTwiML } from '@/lib/clients/twilio';
+import { generateTwiML, normalizeAppUrl } from '@/lib/clients/twilio';
 import { createServiceClient } from '@/lib/clients/supabase';
 import { processAgentTurn } from '@/lib/clients/openai';
 import { ConversationState, IntakeData } from '@/types';
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         .eq('twilio_call_sid', callSid);
 
       // Trigger async processing
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+      const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       fetch(`${appUrl}/api/process-call?callSid=${callSid}`, {
         method: 'POST',
       }).catch((err) => console.error('Error triggering process-call:', err));

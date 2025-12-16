@@ -61,8 +61,23 @@ export default async function CallsPage({
     return (
       <PlatformLayout>
         <div className="w-full px-4 py-4">
-          <div className="max-w-7xl mx-auto" style={{ backgroundColor: '#F5F7FA', minHeight: 'calc(100vh - 4rem)' }}>
-            <CallsList calls={callsList} searchParams={searchParams} />
+          <div className="max-w-7xl mx-auto px-4 py-8 rounded-xl" style={{ backgroundColor: '#F5F7FA', minHeight: 'calc(100vh - 4rem)' }}>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: '#0B1F3B' }}>
+                Call Activity
+              </h1>
+              <p className="text-sm" style={{ color: '#4A5D73' }}>
+                View and manage your AI receptionist's call records
+              </p>
+            </div>
+            <div 
+              className="bg-white rounded-xl shadow-sm overflow-hidden"
+              style={{
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <CallsList calls={callsList} searchParams={searchParams} />
+            </div>
           </div>
         </div>
       </PlatformLayout>

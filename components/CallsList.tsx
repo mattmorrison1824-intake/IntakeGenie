@@ -109,19 +109,9 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
-        <h1 className="text-2xl font-bold mb-1" style={{ color: '#0B1F3B' }}>
-          Call Activity
-        </h1>
-        <p className="text-sm" style={{ color: '#4A5D73' }}>
-          View and manage your AI receptionist's call records
-        </p>
-      </div>
-
+    <div className="flex flex-col">
       {/* Filters */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-6 border-b border-gray-200">
         <form onSubmit={handleFilter} className="flex gap-4 flex-wrap items-end">
           <div className="flex-1 min-w-[150px]">
             <label 
@@ -186,7 +176,7 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto bg-white">
+      <div className="overflow-auto">
         {!calls || calls.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.8 }}>No calls found.</p>
@@ -302,7 +292,7 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
 
       {/* Pagination */}
       {calls && calls.length > 0 && (
-        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between text-sm" style={{ color: '#4A5D73' }}>
+        <div className="p-6 border-t border-gray-200 flex items-center justify-between text-sm" style={{ color: '#4A5D73' }}>
           <div>
             Items per page: 10
           </div>

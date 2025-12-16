@@ -13,6 +13,7 @@ export async function OPTIONS() {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': 'text/plain; charset=utf-8',
     },
   });
 }
@@ -30,9 +31,11 @@ export async function POST(request: NextRequest) {
 
     if (!callSid) {
       console.error('[Twilio Status] Missing CallSid');
-      return new NextResponse('Missing CallSid', { 
-        status: 400,
+      // Always return 200 OK per Twilio requirements (15003, 11200)
+      return new NextResponse('OK', { 
+        status: 200,
         headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
           'Access-Control-Allow-Origin': '*',
         },
       });
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse('OK', { 
       status: 200,
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
       },
     });
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse('OK', { 
       status: 200,
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
       },
     });

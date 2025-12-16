@@ -156,14 +156,15 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
       } else {
         // Create new firm - this is the ONLY time we purchase a number (first save)
         // @ts-ignore - Supabase type inference issue
-        const { data: newFirm, error: insertError } = await supabase.from('firms').insert({
+        const { data: newFirmData, error: insertError } = await supabase.from('firms').insert({
           ...firmData,
           owner_user_id: user.id,
         }).select().single();
 
         if (insertError) throw insertError;
-        if (!newFirm) throw new Error('Failed to create firm');
+        if (!newFirmData) throw new Error('Failed to create firm');
         
+        const newFirm = newFirmData as any;
         firmId = newFirm.id;
 
         // Purchase and configure Twilio number ONLY for new firm creation (first save)

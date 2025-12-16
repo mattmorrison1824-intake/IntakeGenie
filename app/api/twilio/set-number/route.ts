@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
       // Store the number in the database
       const { error: updateError } = await supabase
         .from('firms')
+        // @ts-ignore - Supabase type inference issue
         .update({ twilio_number: phoneNumber })
+        // @ts-ignore - Supabase type inference issue
         .eq('id', firmId);
 
       if (updateError) {
@@ -115,7 +117,9 @@ export async function POST(request: NextRequest) {
         // Still save the number to database
         const { error: updateError } = await supabase
           .from('firms')
+          // @ts-ignore - Supabase type inference issue
           .update({ twilio_number: phoneNumber })
+          // @ts-ignore - Supabase type inference issue
           .eq('id', firmId);
 
         if (updateError) {

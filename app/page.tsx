@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function LandingPage() {
   return (
@@ -12,13 +11,10 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/">
-                <Image 
+                <img 
                   src="/full-logo.png" 
                   alt="IntakeGenie" 
-                  width={200}
-                  height={64}
                   className="h-16 w-auto"
-                  priority
                 />
               </Link>
             </div>
@@ -574,11 +570,9 @@ export default function LandingPage() {
       <footer className="py-12" style={{ backgroundColor: '#0B1F3B' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <Image 
+            <img 
               src="/full-logo.png" 
               alt="IntakeGenie" 
-              width={150}
-              height={32}
               className="h-8 w-auto mx-auto mb-4"
             />
             <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Never miss a legal lead again.</p>

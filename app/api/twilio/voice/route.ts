@@ -7,6 +7,9 @@ import { twiml } from 'twilio';
 // Ensure this route is public (no authentication required)
 export const dynamic = 'force-dynamic';
 
+// Explicitly allow POST and OPTIONS methods
+export const runtime = 'nodejs';
+
 // Handle CORS preflight requests
 export async function OPTIONS() {
   return new NextResponse(null, {

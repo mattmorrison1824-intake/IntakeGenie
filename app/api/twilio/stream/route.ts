@@ -21,6 +21,40 @@ export async function OPTIONS() {
   });
 }
 
+// Helper function to generate greeting with premium TTS
+async function generateGreeting(response: twiml.VoiceResponse, callSid: string | null) {
+  const greetingText = "Hi. Thanks for calling IntakeGenie. I'm an automated assistant for the firm. I can't give legal advice. But I can collect your information so the firm can follow up. Are you in a safe place to talk right now?";
+  
+  try {
+    const { playUrl, fallbackText } = await getTTSAudioUrl(greetingText, callSid || 'unknown', 'greeting');
+    if (playUrl) {
+      response.play(playUrl);
+    } else {
+      // Fallback to Twilio TTS
+      response.say({ voice: 'alice' }, fallbackText);
+    }
+  } catch (error) {
+    console.error('[Stream] TTS error, using fallback:', error);
+    response.say({ voice: 'alice' }, greetingText);
+  }
+}
+
+// Helper function to generate no-input message with premium TTS
+async function generateNoInput(response: twiml.VoiceResponse, callSid: string | null) {
+  const noInputText = "I didn't hear anything. Please call back when you're ready.";
+  try {
+    const { playUrl, fallbackText } = await getTTSAudioUrl(noInputText, callSid || 'unknown', 'no-input');
+    if (playUrl) {
+      response.play(playUrl);
+    } else {
+      response.say({ voice: 'alice' }, fallbackText);
+    }
+  } catch (error) {
+    console.error('[Stream] TTS error, using fallback:', error);
+    response.say({ voice: 'alice' }, noInputText);
+  }
+}
+
 // Twilio's <Redirect> defaults to POST, so we must support POST
 export async function POST(request: NextRequest) {
   console.log('[Twilio Stream] POST request received');
@@ -32,11 +66,8 @@ export async function POST(request: NextRequest) {
 
   const response = new twiml.VoiceResponse();
 
-  // Start with greeting
-  response.say(
-    { voice: 'alice' },
-    "Hi, thanks for calling. I'm an automated assistant for the firm. I'm not a lawyer and I can't provide legal advice, but I can take your information so the firm can follow up. Are you in a safe place to talk right now?"
-  );
+  // Start with greeting - use premium TTS
+  await generateGreeting(response, callSid);
 
   // Start gathering with recording
   // Note: For MVP, we'll record via status callback from Twilio
@@ -50,7 +81,7 @@ export async function POST(request: NextRequest) {
   });
 
   // If no input, hang up
-  response.say("I didn't hear anything. Please call back when you're ready.");
+  await generateNoInput(response, callSid);
   response.hangup();
 
   return generateTwiML(response.toString());
@@ -65,11 +96,8 @@ export async function GET(request: NextRequest) {
 
   const response = new twiml.VoiceResponse();
 
-  // Start with greeting
-  response.say(
-    { voice: 'alice' },
-    "Hi, thanks for calling. I'm an automated assistant for the firm. I'm not a lawyer and I can't provide legal advice, but I can take your information so the firm can follow up. Are you in a safe place to talk right now?"
-  );
+  // Start with greeting - use premium TTS
+  await generateGreeting(response, callSid);
 
   // Start gathering with recording
   // Note: For MVP, we'll record via status callback from Twilio
@@ -83,9 +111,8 @@ export async function GET(request: NextRequest) {
   });
 
   // If no input, hang up
-  response.say("I didn't hear anything. Please call back when you're ready.");
+  await generateNoInput(response, callSid);
   response.hangup();
 
   return generateTwiML(response.toString());
 }
-

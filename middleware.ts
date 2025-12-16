@@ -78,13 +78,22 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - api/twilio (Twilio webhooks - must be public)
+     * - api/twilio (Twilio webhooks - must be public, completely excluded from middleware)
      * - public folder
      * 
-     * Note: The negative lookahead (?!...) excludes paths that start with these patterns
-     * The pattern checks what comes AFTER the leading /, so we check for the full path segments
+     * Note: We use a negative lookahead to exclude paths. Since paths start with /,
+     * we need to check for the pattern after the leading slash.
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|api/twilio/|api/twilio$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    {
+      /*
+       * Exclude paths that start with:
+       * - _next/static or _next/image (Next.js internal)
+       * - favicon.ico
+       * - api/twilio (any path starting with /api/twilio)
+       * - Image file extensions
+       */
+      source: '/((?!_next/static|_next/image|favicon\\.ico|api/twilio|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    },
   ],
 };
 

@@ -80,9 +80,10 @@ export async function getTTSAudioUrl(
     return { playUrl: null, fallbackText: text };
   }
 
-  // Encode text for URL
+  // Use query params instead of dynamic route to avoid redirects
+  // Format: /api/audio?callSid=X&turn=Y&text=Z
   const encodedText = encodeURIComponent(text);
-  const playUrl = `${appUrl}/api/audio/${callSid}/${turn}?text=${encodedText}`;
+  const playUrl = `${appUrl}/api/audio?callSid=${encodeURIComponent(callSid)}&turn=${encodeURIComponent(turn)}&text=${encodedText}`;
 
   return { playUrl, fallbackText: text };
 }

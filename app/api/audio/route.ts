@@ -27,17 +27,23 @@ function getCacheKey(text: string): string {
   return text.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ callSid: string; turn: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { callSid, turn } = await params;
-    const text = request.nextUrl.searchParams.get('text');
+    const { searchParams } = new URL(request.url);
+    const callSid = searchParams.get('callSid') || 'test';
+    const turn = searchParams.get('turn') || '0';
+    const text = searchParams.get('text');
 
     if (!text) {
-      return new NextResponse('Missing text parameter', { status: 400 });
+      return new NextResponse('Missing text parameter', { 
+        status: 400,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
+
+    console.log(`[Audio] Request: callSid=${callSid}, turn=${turn}, text="${text.substring(0, 50)}..."`);
 
     // Check cache first
     const cacheKey = getCacheKey(text);
@@ -50,7 +56,7 @@ export async function GET(
       console.log(`[Deepgram TTS] Generating audio for: "${text.substring(0, 50)}..."`);
       
       try {
-        // Generate TTS with Deepgram Aura
+        // Generate TTS with Deepgram Aura (MP3)
         audioBuffer = await generateTTS(text);
         
         // Cache the result (limit cache size to prevent memory issues)
@@ -60,7 +66,6 @@ export async function GET(
       } catch (error) {
         console.error('[Deepgram TTS] Error generating audio:', error);
         // Return 404 so Twilio will skip this Play and continue
-        // The caller should have fallback logic, but this prevents Twilio from trying to play error text
         return new NextResponse(null, { 
           status: 404,
           headers: {
@@ -71,7 +76,7 @@ export async function GET(
     }
 
     // Return audio as MP3 - Twilio's most reliable format
-    // Convert Buffer to Uint8Array for NextResponse
+    // CRITICAL: Return 200 OK directly, no redirects
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
       headers: {
@@ -83,7 +88,12 @@ export async function GET(
     });
   } catch (error) {
     console.error('[Audio Route] Error:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    return new NextResponse('Internal server error', { 
+      status: 500,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
   }
 }
 

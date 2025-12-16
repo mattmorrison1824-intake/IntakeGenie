@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient, createServerClient } from '@/lib/clients/supabase';
+import { normalizeAppUrl } from '@/lib/clients/twilio';
 import twilio from 'twilio';
 
 // Handle OPTIONS for CORS

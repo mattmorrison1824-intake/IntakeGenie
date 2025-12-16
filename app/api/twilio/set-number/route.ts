@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/clients/supabase';
+import { createServiceClient, createServerClient } from '@/lib/clients/supabase';
 import twilio from 'twilio';
+
+// Handle OPTIONS for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,18 +44,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceClient();
+    // Verify user is authenticated
+    const supabase = await createServerClient();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    // Verify firm exists
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Please sign in.' },
+        { status: 401 }
+      );
+    }
+
+    // Verify firm exists and user owns it
     const { data: firmData, error: firmError } = await supabase
       .from('firms')
       .select('id, owner_user_id, twilio_number')
       .eq('id', firmId)
+      .eq('owner_user_id', session.user.id)
       .single();
 
     if (firmError || !firmData) {
       return NextResponse.json(
-        { error: 'Firm not found' },
+        { error: 'Firm not found or you do not have permission to modify it' },
         { status: 404 }
       );
     }
@@ -88,8 +110,9 @@ export async function POST(request: NextRequest) {
         statusCallbackMethod: 'POST',
       });
 
-      // Store the number in the database
-      const { error: updateError } = await supabase
+      // Store the number in the database (use service client to bypass RLS)
+      const serviceSupabase = createServiceClient();
+      const { error: updateError } = await serviceSupabase
         .from('firms')
         // @ts-ignore - Supabase type inference issue
         .update({ twilio_number: phoneNumber })
@@ -114,8 +137,10 @@ export async function POST(request: NextRequest) {
       
       // If it's a webhook URL error, still save the number but warn the user
       if (twilioError.message && twilioError.message.includes('not valid')) {
+        // Use service client for database update (bypasses RLS)
+        const serviceSupabase = createServiceClient();
         // Still save the number to database
-        const { error: updateError } = await supabase
+        const { error: updateError } = await serviceSupabase
           .from('firms')
           // @ts-ignore - Supabase type inference issue
           .update({ twilio_number: phoneNumber })
@@ -152,7 +177,14 @@ export async function POST(request: NextRequest) {
         error: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      }
     );
   }
 }

@@ -444,7 +444,15 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                         const data = await response.json();
                         
                         if (!response.ok) {
-                          throw new Error(data.error || 'Failed to set Twilio number');
+                          const errorMsg = data.error || data.message || 'Failed to set Twilio number';
+                          const hint = data.hint ? ` ${data.hint}` : '';
+                          throw new Error(errorMsg + hint);
+                        }
+
+                        if (data.warning) {
+                          // Show warning but still consider it success
+                          setError(data.warning);
+                          setTimeout(() => setError(null), 5000);
                         }
 
                         setSuccess(true);
@@ -454,7 +462,8 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                           onSave();
                         }, 2000);
                       } catch (err: any) {
-                        setError(err.message || 'Failed to set Twilio number');
+                        console.error('Error setting number:', err);
+                        setError(err.message || 'Failed to set Twilio number. Check browser console for details.');
                       } finally {
                         setLoading(false);
                       }

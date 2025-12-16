@@ -23,8 +23,10 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[Twilio Voice] POST request received');
   try {
     const formData = await request.formData();
+    console.log('[Twilio Voice] FormData parsed successfully');
     const callSid = formData.get('CallSid') as string;
     const fromNumber = formData.get('From') as string;
     const toNumber = formData.get('To') as string;

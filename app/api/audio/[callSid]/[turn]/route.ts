@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTTS } from '@/lib/clients/deepgram';
-import { normalizeAppUrl } from '@/lib/clients/twilio';
 
 // In-memory cache for generated audio (key: text, value: Buffer)
 // In production, consider using Redis or file storage
 const audioCache = new Map<string, Buffer>();
 
+// CRITICAL: Must be dynamic and use nodejs runtime for audio serving
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
+}
 
 // Generate a cache key from text
 function getCacheKey(text: string): string {

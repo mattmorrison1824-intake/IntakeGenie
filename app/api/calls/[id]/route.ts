@@ -39,17 +39,26 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Delete the call
-    const { error: deleteError } = await supabase
+    // Delete the call using service client to bypass RLS (we've already verified ownership)
+    // This is safe because we've verified the user owns the firm that owns the call
+    const { createServiceClient } = await import('@/lib/clients/supabase');
+    const serviceSupabase = createServiceClient();
+    
+    const { error: deleteError, data: deleteData } = await serviceSupabase
       .from('calls')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (deleteError) {
       console.error('Error deleting call:', deleteError);
-      return NextResponse.json({ error: 'Failed to delete call' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to delete call',
+        details: deleteError.message 
+      }, { status: 500 });
     }
 
+    console.log(`Successfully deleted call ${id}`);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Error in DELETE /api/calls/[id]:', error);

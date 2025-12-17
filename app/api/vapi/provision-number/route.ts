@@ -128,17 +128,18 @@ export async function POST(req: NextRequest) {
     // According to Vapi docs, create phone number first, then assign assistant via PATCH
     let phoneResponse;
     let phoneNumberId: string;
+    // Declare phonePayload outside try block so it's accessible in catch
+    const phonePayload: any = {
+      provider: 'vapi', // Use Vapi's free phone number service
+    };
+    
+    // Add optional fields only if they're supported
+    // Note: numberDesiredAreaCode might not be supported for free Vapi numbers
+    // Try without it first, can add name later if needed
+    
     try {
       console.log('[Vapi Provision] Creating phone number...');
-      // Create phone number without assistantId first (assign via PATCH after)
-      // According to Vapi API docs, minimal required payload is just provider
-      const phonePayload: any = {
-        provider: 'vapi', // Use Vapi's free phone number service
-      };
-      
-      // Add optional fields only if they're supported
-      // Note: numberDesiredAreaCode might not be supported for free Vapi numbers
-      // Try without it first, can add name later if needed
+      console.log('[Vapi Provision] Payload:', JSON.stringify(phonePayload, null, 2));
       
       phoneResponse = await vapi.post('/phone-number', phonePayload);
       console.log('[Vapi Provision] Phone number created:', phoneResponse.data);

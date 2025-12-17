@@ -411,6 +411,55 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                 </div>
               )}
 
+              {/* Backfill Calls Button - Show if number is provisioned */}
+              {(firm.inbound_number_e164 || firm.vapi_phone_number_id || firm.twilio_phone_number_sid) && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!supabase || !firm) return;
+                      
+                      setLoading(true);
+                      setError(null);
+                      
+                      try {
+                        const response = await fetch('/api/telephony/backfill-calls', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                        });
+
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                          throw new Error(data.error || data.details || 'Failed to backfill calls');
+                        }
+
+                        setSuccess(true);
+                        setTimeout(() => {
+                          setSuccess(false);
+                          onSave(); // Refresh the page to show new calls
+                        }, 2000);
+                      } catch (err: any) {
+                        console.error('Error backfilling calls:', err);
+                        setError(err.message || 'Failed to backfill calls. Check browser console for details.');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="h-10 px-4 rounded-lg font-semibold text-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: '#4A5D73', color: '#FFFFFF' }}
+                  >
+                    {loading ? 'Backfilling...' : 'Backfill Old Calls from Vapi'}
+                  </button>
+                  <p className="text-xs mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                    Fetch and import any calls that were made before webhook logging was fixed.
+                  </p>
+                </div>
+              )}
+
               {/* Link Existing Phone Number - Only show if no number is provisioned */}
               {!firm.inbound_number_e164 && !firm.vapi_phone_number_id && !firm.twilio_phone_number_sid && (
                 <details className="mt-4 p-3 rounded-lg border" style={{ borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' }}>

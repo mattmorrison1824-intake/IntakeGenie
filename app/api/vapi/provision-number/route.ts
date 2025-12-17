@@ -46,9 +46,27 @@ export async function POST(req: NextRequest) {
     }
 
     // Get app URL for webhook
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    // Prefer VERCEL_URL (automatically set by Vercel) or NEXT_PUBLIC_APP_URL
+    let appUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL;
+    
     if (!appUrl) {
-      return NextResponse.json({ error: 'NEXT_PUBLIC_APP_URL not configured' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'App URL not configured. Set NEXT_PUBLIC_APP_URL or deploy to Vercel.' 
+      }, { status: 500 });
+    }
+
+    // Prevent localhost URLs (Vapi can't reach localhost)
+    if (appUrl.includes('localhost') || appUrl.includes('127.0.0.1')) {
+      return NextResponse.json({ 
+        error: 'Cannot use localhost for webhook URL. Vapi needs a publicly accessible URL. Set NEXT_PUBLIC_APP_URL to your production domain (e.g., https://www.intakegenie.xyz).' 
+      }, { status: 400 });
+    }
+
+    // Ensure URL has https:// protocol
+    if (!appUrl.startsWith('http://') && !appUrl.startsWith('https://')) {
+      appUrl = `https://${appUrl}`;
     }
 
     const webhookUrl = `${appUrl}/api/vapi/webhook`;

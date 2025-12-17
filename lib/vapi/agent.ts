@@ -57,7 +57,7 @@ Rules:
     // High values mean agent waits longer before interrupting
     stopSpeakingPlan: {
       numWords: 5, // Wait for caller to say at least 5 words before considering interruption
-      voiceSeconds: 1.0, // Require 1 second of continuous speech before stopping
+      voiceSeconds: 0.5, // Require 0.5 seconds of continuous speech before stopping (max allowed by Vapi)
       backoffSeconds: 2.0, // Wait 2 seconds after interruption before resuming
     },
     // Note: Call ending will be handled via server webhook when agent says goodbye

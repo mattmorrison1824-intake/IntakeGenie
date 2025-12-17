@@ -445,7 +445,20 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                         const data = await response.json();
                         
                         if (!response.ok) {
-                          const errorMsg = data.error || data.message || 'Failed to provision number';
+                          // Extract error message - handle array format
+                          let errorMsg = 'Failed to provision number';
+                          if (data.message) {
+                            if (Array.isArray(data.message)) {
+                              errorMsg = data.message.join(', ');
+                            } else {
+                              errorMsg = data.message;
+                            }
+                          } else if (data.error) {
+                            errorMsg = data.error;
+                          } else if (data.details) {
+                            errorMsg = typeof data.details === 'string' ? data.details : JSON.stringify(data.details);
+                          }
+                          console.error('Provision error details:', data);
                           throw new Error(errorMsg);
                         }
 

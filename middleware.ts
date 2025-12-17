@@ -9,19 +9,30 @@ export async function middleware(request: NextRequest) {
   // Public routes - allow landing page, login, ALL Twilio webhook routes, Vapi webhook route, audio endpoints, and test endpoints
   // This check happens FIRST before any Supabase client creation to avoid 401 errors
   // CRITICAL: Return immediately for webhook routes and audio endpoints to prevent any interference
-  if (
-    pathname.startsWith('/api/twilio') || 
-    pathname === '/api/vapi/webhook' || // Allow Vapi webhook route (must be public for Vapi to call it)
-    pathname.startsWith('/api/audio') ||
-    pathname.startsWith('/api/process-call') || // Allow process-call (called by Twilio and watchdog)
-    pathname.startsWith('/api/test-email') ||
-    pathname.startsWith('/api/test-intake-email') ||
-    pathname.startsWith('/api/test-voice-latency') ||
-    pathname.startsWith('/api/test-transcription')
-  ) {
+  const publicRoutes = [
+    '/api/twilio',
+    '/api/vapi/webhook', // Vapi webhook route (must be public for Vapi to call it)
+    '/api/audio',
+    '/api/process-call', // Allow process-call (called by Twilio and watchdog)
+    '/api/test-email',
+    '/api/test-intake-email',
+    '/api/test-voice-latency',
+    '/api/test-transcription',
+  ];
+  
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route)) || pathname === '/api/vapi/webhook';
+  
+  if (isPublicRoute) {
     console.log(`[Middleware] Allowing public route: ${method} ${pathname}`);
     // Return immediately without any modifications to preserve the request
-    return NextResponse.next();
+    // Use rewrite to ensure no authentication checks happen
+    return NextResponse.next({
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   }
 
   if (pathname === '/' || pathname === '/login') {
@@ -79,12 +90,14 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api/twilio (Twilio webhooks - must be public, handled by early return)
+     * - api/vapi/webhook (Vapi webhooks - must be public, handled by early return)
+     * - api/audio (audio endpoints - must be public)
      * - public folder
      * 
-     * Note: Even though we check for /api/twilio in the middleware function,
-     * we still try to exclude it from the matcher to minimize processing
+     * Note: Even though we check for public routes in the middleware function,
+     * we still try to exclude them from the matcher to minimize processing
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|api/twilio|api/vapi/webhook|api/audio|api/process-call|api/test-|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
 

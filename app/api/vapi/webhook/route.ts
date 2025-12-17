@@ -20,6 +20,12 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  // Log that webhook was received (for debugging 401 issues)
+  console.log('[Vapi Webhook] ========== WEBHOOK REQUEST RECEIVED ==========');
+  console.log('[Vapi Webhook] Method:', req.method);
+  console.log('[Vapi Webhook] URL:', req.url);
+  console.log('[Vapi Webhook] Headers:', Object.fromEntries(req.headers.entries()));
+  
   try {
     const body = await req.json();
 

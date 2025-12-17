@@ -62,32 +62,62 @@ export async function POST(req: NextRequest) {
     );
 
     // Create assistant first
-    const assistantResponse = await vapi.post('/assistants', {
-      name: `${firm.firm_name} Intake Assistant`,
-      model: agentConfig.model,
-      voice: agentConfig.voice,
-      transcriber: agentConfig.transcriber,
-      firstMessage: agentConfig.firstMessage,
-      systemPrompt: agentConfig.systemPrompt,
-      serverUrl: webhookUrl,
-    });
+    let assistantResponse;
+    try {
+      assistantResponse = await vapi.post('/assistants', {
+        name: `${firm.firm_name} Intake Assistant`,
+        model: agentConfig.model,
+        voice: agentConfig.voice,
+        transcriber: agentConfig.transcriber,
+        firstMessage: agentConfig.firstMessage,
+        systemPrompt: agentConfig.systemPrompt,
+        server: {
+          url: webhookUrl,
+        },
+      });
+    } catch (vapiError: any) {
+      console.error('[Vapi Provision] Assistant creation error:', vapiError?.response?.data || vapiError?.message || vapiError);
+      return NextResponse.json({ 
+        error: 'Failed to create assistant',
+        details: vapiError?.response?.data || vapiError?.message || 'Unknown error'
+      }, { status: 500 });
+    }
 
     const assistantId = assistantResponse.data.id;
     if (!assistantId) {
-      return NextResponse.json({ error: 'Failed to create assistant' }, { status: 500 });
+      console.error('[Vapi Provision] No assistant ID in response:', assistantResponse.data);
+      return NextResponse.json({ 
+        error: 'Failed to create assistant',
+        details: 'No assistant ID returned',
+        response: assistantResponse.data
+      }, { status: 500 });
     }
 
     // Provision phone number with assistant and webhook
-    const phoneResponse = await vapi.post('/phone-numbers', {
-      assistantId: assistantId,
-      server: {
-        url: webhookUrl,
-      },
-    });
+    let phoneResponse;
+    try {
+      phoneResponse = await vapi.post('/phone-numbers', {
+        assistantId: assistantId,
+        server: {
+          url: webhookUrl,
+        },
+      });
+    } catch (vapiError: any) {
+      console.error('[Vapi Provision] Phone number creation error:', vapiError?.response?.data || vapiError?.message || vapiError);
+      return NextResponse.json({ 
+        error: 'Failed to provision phone number',
+        details: vapiError?.response?.data || vapiError?.message || 'Unknown error'
+      }, { status: 500 });
+    }
 
     const phoneNumber = phoneResponse.data.number || phoneResponse.data.phoneNumber;
     if (!phoneNumber) {
-      return NextResponse.json({ error: 'Failed to provision number' }, { status: 500 });
+      console.error('[Vapi Provision] No phone number in response:', phoneResponse.data);
+      return NextResponse.json({ 
+        error: 'Failed to provision number',
+        details: 'No phone number returned',
+        response: phoneResponse.data
+      }, { status: 500 });
     }
 
     // Save number and assistant ID to firm record
@@ -106,10 +136,16 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ phoneNumber, assistantId });
-  } catch (error) {
-    console.error('[Vapi Provision] Error:', error);
+  } catch (error: any) {
+    console.error('[Vapi Provision] Unexpected error:', error);
+    console.error('[Vapi Provision] Error stack:', error?.stack);
+    console.error('[Vapi Provision] Error response:', error?.response?.data);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        details: error?.response?.data || error?.message || 'Unknown error',
+        type: error?.constructor?.name
+      },
       { status: 500 }
     );
   }

@@ -71,6 +71,15 @@ export async function POST(req: NextRequest) {
           server: {
             url: webhookUrl,
           },
+          serverMessages: [
+            'status-update',
+            'end-of-call-report',
+            'function-call',
+            'transcript',
+          ],
+          artifactPlan: {
+            recordingEnabled: true,
+          },
           metadata: {
             firmId: firmId,
           },

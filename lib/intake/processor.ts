@@ -111,12 +111,14 @@ export async function finalizeCall({
   phoneNumber,
   firmId,
   intake,
+  recordingUrl,
 }: {
   conversationId: string;
   transcript?: string;
   phoneNumber?: string;
   firmId?: string;
   intake?: any;
+  recordingUrl?: string;
 }) {
   const supabase = createServiceClient();
 
@@ -183,7 +185,7 @@ export async function finalizeCall({
       }
       
       // Continue with finalization
-      await finalizeCallRecord(supabase, call, finalIntake, transcript, phoneNumber);
+      await finalizeCallRecord(supabase, call, finalIntake, transcript, phoneNumber, recordingUrl);
     } else {
       console.error('[Finalize Call] Cannot create call - no firmId provided. Conversation ID:', conversationId);
       console.error('[Finalize Call] This means the webhook could not find the firm. Check server logs for firm lookup errors.');
@@ -193,7 +195,7 @@ export async function finalizeCall({
     const call = callData as any;
     // Use provided intake data, or fall back to existing intake_json
     const finalIntake = intake || (call.intake_json as IntakeData) || {};
-    await finalizeCallRecord(supabase, call, finalIntake, transcript, phoneNumber);
+    await finalizeCallRecord(supabase, call, finalIntake, transcript, phoneNumber, recordingUrl);
   }
 }
 
@@ -202,13 +204,15 @@ async function finalizeCallRecord(
   call: any,
   intake: IntakeData,
   transcript?: string,
-  phoneNumber?: string
+  phoneNumber?: string,
+  recordingUrl?: string
 ) {
 
-  // Update call with transcript, intake data, caller number, and end time
+  // Update call with transcript, intake data, caller number, recording URL, and end time
   const updateData: any = {
     transcript_text: transcript || null,
     from_number: phoneNumber || call.from_number || '',
+    recording_url: recordingUrl || call.recording_url || null,
     ended_at: new Date().toISOString(),
     status: 'summarizing',
   };
@@ -274,7 +278,7 @@ async function finalizeCallRecord(
         intake,
         summary,
         transcript || null,
-        null, // Recording URL (Vapi may provide this separately)
+        recordingUrl || call.recording_url || null, // Use recording URL if available
         call.urgency as UrgencyLevel
       );
       await supabase

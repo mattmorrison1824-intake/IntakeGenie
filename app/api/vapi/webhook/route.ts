@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     let phoneNumber: string | undefined;
     let metadata: any;
     let phoneNumberId: string | undefined;
+    let recordingUrl: string | undefined;
 
     // Check if it's the new message format (Vapi's actual webhook format)
     if (body.message) {
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
         } else {
           event = 'conversation.updated';
         }
+      } else if (message.type === 'end-of-call-report') {
+        // end-of-call-report contains final transcript and data
+        event = 'conversation.completed';
       } else {
         event = message.type;
       }
@@ -58,14 +62,42 @@ export async function POST(req: NextRequest) {
       phoneNumberId = message.phoneNumber?.id;
       metadata = message.assistant?.metadata || message.metadata;
       
-      // Extract transcript from artifact if available
+      // Extract transcript from various locations
       if (message.artifact?.transcript) {
         transcript = message.artifact.transcript;
+      } else if (message.transcript) {
+        transcript = message.transcript;
+      } else if (message.summary?.transcript) {
+        transcript = message.summary.transcript;
+      } else if (message.report?.transcript) {
+        transcript = message.report.transcript;
       }
       
-      // Extract structured data if available
+      // Extract structured data from various locations
       if (message.artifact?.structuredData) {
         structuredData = message.artifact.structuredData;
+      } else if (message.structuredData) {
+        structuredData = message.structuredData;
+      } else if (message.summary?.structuredData) {
+        structuredData = message.summary.structuredData;
+      } else if (message.report?.structuredData) {
+        structuredData = message.report.structuredData;
+      }
+      
+      // Extract recording URL from various locations
+      // According to Vapi docs, recording is in artifact.recording (not recordingUrl)
+      if (message.artifact?.recording) {
+        recordingUrl = typeof message.artifact.recording === 'string' 
+          ? message.artifact.recording 
+          : message.artifact.recording.url || message.artifact.recording.recordingUrl;
+      } else if (message.artifact?.recordingUrl) {
+        recordingUrl = message.artifact.recordingUrl;
+      } else if (message.recordingUrl) {
+        recordingUrl = message.recordingUrl;
+      } else if (message.recording?.url) {
+        recordingUrl = message.recording.url;
+      } else if (message.report?.recordingUrl) {
+        recordingUrl = message.report.recordingUrl;
       }
       
       console.log('[Vapi Webhook] ========== WEBHOOK RECEIVED (VAPI FORMAT) ==========');
@@ -237,7 +269,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (event === 'conversation.completed' || (body.message?.type === 'status-update' && body.message?.status === 'ended')) {
+    if (event === 'conversation.completed' || 
+        (body.message?.type === 'status-update' && body.message?.status === 'ended') ||
+        body.message?.type === 'end-of-call-report') {
       // Finalize call: save transcript, generate summary, send email
       console.log('[Vapi Webhook] Processing conversation.completed event');
       
@@ -251,8 +285,10 @@ export async function POST(req: NextRequest) {
       }
       
       // If transcript is still missing, fetch it from Vapi API
+      // Vapi may need time to process the transcript after call ends, so we retry with delays
       let finalStructuredData = structuredData;
       let finalCallerNumber = actualPhoneNumber;
+      let finalRecordingUrl = recordingUrl;
       
       if (!finalTranscript || !finalStructuredData || !finalCallerNumber) {
         console.log('[Vapi Webhook] Missing data, fetching from Vapi API...');
@@ -260,51 +296,141 @@ export async function POST(req: NextRequest) {
         console.log('[Vapi Webhook] Missing structured data:', !finalStructuredData);
         console.log('[Vapi Webhook] Missing caller number:', !finalCallerNumber);
         
-        try {
-          // Fetch call data from Vapi API
-          // Use conversation_id as call ID
-          const callResponse = await vapi.get(`/call/${conversation_id}`);
-          const callData = callResponse.data;
-          
-          console.log('[Vapi Webhook] Fetched call data from API:', JSON.stringify(callData, null, 2));
-          
-          // Extract transcript from API response
-          if (!finalTranscript && callData.transcript) {
-            finalTranscript = callData.transcript;
-            console.log('[Vapi Webhook] Found transcript in API response, length:', finalTranscript?.length || 0);
-          }
-          
-          // Extract structured data from API response
-          if (!finalStructuredData && callData.structuredData) {
-            finalStructuredData = callData.structuredData;
-            console.log('[Vapi Webhook] Found structured data in API response');
-          }
-          
-          // Extract caller number from API response
-          if (!finalCallerNumber && callData.customer?.number) {
-            finalCallerNumber = callData.customer.number;
-            console.log('[Vapi Webhook] Found caller number in API response:', finalCallerNumber);
-          }
-          
-          // Also extract messages/transcript from messages array if available
-          if (!finalTranscript && callData.messages && Array.isArray(callData.messages)) {
-            const messages = callData.messages
-              .filter((msg: any) => msg.type === 'transcript' || msg.role === 'user' || msg.role === 'assistant')
-              .map((msg: any) => {
-                if (msg.type === 'transcript') {
-                  return `${msg.role === 'user' ? 'Caller' : 'Assistant'}: ${msg.transcript || msg.content || ''}`;
-                }
-                return `${msg.role === 'user' ? 'Caller' : 'Assistant'}: ${msg.content || ''}`;
-              });
-            if (messages.length > 0) {
-              finalTranscript = messages.join('\n');
-              console.log('[Vapi Webhook] Built transcript from messages array, length:', finalTranscript?.length || 0);
+        // Retry fetching with increasing delays (Vapi may need time to process transcript)
+        const delays = [2000, 5000, 10000]; // 2s, 5s, 10s
+        let fetchedData = false;
+        
+        for (let i = 0; i < delays.length; i++) {
+          try {
+            // Wait before fetching (except first attempt)
+            if (i > 0) {
+              console.log(`[Vapi Webhook] Waiting ${delays[i]}ms before retry ${i + 1}...`);
+              await new Promise(resolve => setTimeout(resolve, delays[i] - delays[i - 1]));
             }
+            
+            // Fetch call data from Vapi API
+            // Use conversation_id as call ID
+            console.log(`[Vapi Webhook] Fetching call data from API (attempt ${i + 1}/${delays.length})...`);
+            const callResponse = await vapi.get(`/call/${conversation_id}`);
+            const callData = callResponse.data;
+            
+            console.log('[Vapi Webhook] Fetched call data from API:', JSON.stringify(callData, null, 2));
+            console.log('[Vapi Webhook] Call data keys:', Object.keys(callData));
+            
+            // Extract transcript from various possible locations
+            if (!finalTranscript) {
+              // Try different fields where transcript might be
+              finalTranscript = 
+                callData.transcript || 
+                callData.fullTranscript ||
+                callData.transcription ||
+                callData.artifact?.transcript ||
+                null;
+              
+              if (finalTranscript) {
+                console.log('[Vapi Webhook] Found transcript in API response, length:', finalTranscript.length);
+                fetchedData = true;
+              }
+            }
+            
+            // Extract structured data from various possible locations
+            if (!finalStructuredData) {
+              finalStructuredData = 
+                callData.structuredData || 
+                callData.artifact?.structuredData ||
+                callData.data ||
+                null;
+              
+              if (finalStructuredData) {
+                console.log('[Vapi Webhook] Found structured data in API response');
+                fetchedData = true;
+              }
+            }
+            
+            // Extract caller number from API response
+            if (!finalCallerNumber) {
+              finalCallerNumber = 
+                callData.customer?.number || 
+                callData.fromNumber ||
+                callData.from_number ||
+                null;
+              
+              if (finalCallerNumber) {
+                console.log('[Vapi Webhook] Found caller number in API response:', finalCallerNumber);
+                fetchedData = true;
+              }
+            }
+            
+            // Extract recording URL from API response
+            // According to Vapi docs, recording is in artifact.recording
+            if (!finalRecordingUrl) {
+              if (callData.artifact?.recording) {
+                finalRecordingUrl = typeof callData.artifact.recording === 'string'
+                  ? callData.artifact.recording
+                  : callData.artifact.recording.url || callData.artifact.recording.recordingUrl;
+              } else {
+                finalRecordingUrl = 
+                  callData.artifact?.recordingUrl ||
+                  callData.recordingUrl ||
+                  callData.recording?.url ||
+                  callData.recording_url ||
+                  null;
+              }
+              
+              if (finalRecordingUrl) {
+                console.log('[Vapi Webhook] Found recording URL in API response:', finalRecordingUrl);
+                fetchedData = true;
+              }
+            }
+            
+            // Also extract messages/transcript from messages array if available
+            if (!finalTranscript && callData.messages && Array.isArray(callData.messages)) {
+              console.log('[Vapi Webhook] Processing messages array, length:', callData.messages.length);
+              const messages = callData.messages
+                .filter((msg: any) => {
+                  // Include transcript messages, user/assistant messages, or any message with content
+                  return msg.type === 'transcript' || 
+                         msg.role === 'user' || 
+                         msg.role === 'assistant' ||
+                         msg.type === 'message' ||
+                         (msg.content && msg.content.trim().length > 0);
+                })
+                .map((msg: any) => {
+                  const role = msg.role === 'user' ? 'Caller' : (msg.role === 'assistant' ? 'Assistant' : 'System');
+                  const content = msg.transcript || msg.content || msg.text || '';
+                  return `${role}: ${content}`;
+                });
+              
+              if (messages.length > 0) {
+                finalTranscript = messages.join('\n');
+                console.log('[Vapi Webhook] Built transcript from messages array, length:', finalTranscript.length);
+                fetchedData = true;
+              }
+            }
+            
+            // If we got what we needed, break out of retry loop
+            if (finalTranscript && finalCallerNumber) {
+              console.log('[Vapi Webhook] Successfully fetched all required data');
+              break;
+            }
+            
+          } catch (apiError: any) {
+            console.error(`[Vapi Webhook] Error fetching call data from API (attempt ${i + 1}):`, apiError?.response?.data || apiError?.message);
+            console.error('[Vapi Webhook] API error status:', apiError?.response?.status);
+            
+            // If it's a 404, the call might not exist yet - continue retrying
+            if (apiError?.response?.status === 404 && i < delays.length - 1) {
+              console.log('[Vapi Webhook] Call not found yet, will retry...');
+              continue;
+            }
+            
+            // For other errors, continue with what we have
+            break;
           }
-        } catch (apiError: any) {
-          console.error('[Vapi Webhook] Error fetching call data from API:', apiError?.response?.data || apiError?.message);
-          console.error('[Vapi Webhook] API error status:', apiError?.response?.status);
-          // Continue with what we have from webhook
+        }
+        
+        if (!fetchedData) {
+          console.warn('[Vapi Webhook] Could not fetch transcript/data from API after all retries');
         }
       }
       
@@ -332,6 +458,7 @@ export async function POST(req: NextRequest) {
           phoneNumber: finalCallerNumber || actualPhoneNumber, // Use caller number from API if available
           firmId: firmId,
           intake: finalStructuredData, // Pass structured data if we fetched it
+          recordingUrl: finalRecordingUrl, // Pass recording URL if available
         });
         console.log('[Vapi Webhook] Call finalized successfully');
       } catch (finalizeError: any) {

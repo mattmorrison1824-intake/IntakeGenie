@@ -91,6 +91,19 @@ export async function POST(req: NextRequest) {
         url: webhookUrl,
       };
       
+      // Ensure serverMessages includes events we need for transcript/data
+      assistantPayload.serverMessages = [
+        'status-update',
+        'end-of-call-report',
+        'function-call',
+        'transcript',
+      ];
+      
+      // Enable recording
+      assistantPayload.artifactPlan = {
+        recordingEnabled: true,
+      };
+      
       console.log('[Update Assistant] Updating assistant:', firm.vapi_assistant_id);
       console.log('[Update Assistant] Payload:', JSON.stringify(assistantPayload, null, 2));
       

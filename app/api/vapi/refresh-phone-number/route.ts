@@ -58,18 +58,11 @@ export async function POST(req: NextRequest) {
       const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
       const data = getResponse.data;
       
-      // Check all possible locations for the phone number
+      // According to Vapi API docs, the phone number is at the top-level "number" field
+      // Also check fallbackDestination.number as fallback
       const phoneNumber = 
-        data.number ||                                    // Top-level number
-        data.phoneNumber ||                               // Alternative top-level
-        data.phone ||                                     // Short form
-        data.value ||                                     // Generic value
-        data.numberValue ||                               // Number value
-        data.inboundPhoneNumber ||                        // Inbound number
-        data.outboundPhoneNumber ||                       // Outbound number
-        data.fallbackDestination?.number ||              // Fallback destination number
-        data.fallbackDestination?.callerId ||             // Fallback caller ID
-        (data.fallbackDestination && typeof data.fallbackDestination === 'string' ? data.fallbackDestination : null) || // Fallback as string
+        (data.number && typeof data.number === 'string' && data.number.match(/^\+?[1-9]\d{1,14}$/)) ? data.number : // Top-level number (E.164 format)
+        (data.fallbackDestination?.number && typeof data.fallbackDestination.number === 'string' && data.fallbackDestination.number.match(/^\+?[1-9]\d{1,14}$/)) ? data.fallbackDestination.number : // Fallback destination number
         null;
       
       console.log('[Refresh Phone] Full response:', JSON.stringify(data, null, 2));

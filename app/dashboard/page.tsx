@@ -137,8 +137,27 @@ export default async function DashboardPage() {
                     </h2>
                     </div>
                   <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
-                    {(firm.vapi_phone_number || firm.twilio_number || '').replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')}
+                    {firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) 
+                      ? firm.vapi_phone_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
+                      : firm.twilio_number 
+                        ? firm.twilio_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
+                        : firm.vapi_phone_number && firm.vapi_phone_number.includes('Pending')
+                          ? 'Number being assigned...'
+                          : 'No number assigned'}
                   </div>
+                  {firm.vapi_phone_number && !firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) && (
+                    <p className="text-sm mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                      The number will appear here after the first call or check the{' '}
+                      <a 
+                        href="https://dashboard.vapi.ai/phone-numbers" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Vapi Dashboard
+                      </a>
+                    </p>
+                  )}
                 </div>
               )}
 

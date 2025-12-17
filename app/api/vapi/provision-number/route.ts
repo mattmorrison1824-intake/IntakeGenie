@@ -189,13 +189,14 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // If still no number, it may be assigned later - store ID for now
+    // If still no number, Vapi free numbers don't expose the number via API
+    // The number will be available in the dashboard and will come through webhooks
     if (!phoneNumber) {
-      console.warn('[Vapi Provision] Phone number not yet assigned by Vapi API.');
+      console.warn('[Vapi Provision] Vapi free phone numbers do not expose the number via API.');
       console.warn('[Vapi Provision] Phone number ID:', phoneNumberId);
-      console.warn('[Vapi Provision] Number may be assigned asynchronously. Will be available after provisioning completes.');
-      // Store the ID - we can refresh later
-      phoneNumber = phoneNumberId; // Store ID temporarily
+      console.warn('[Vapi Provision] The number will be visible in the Vapi dashboard and will be captured from webhooks when calls are received.');
+      // Store a user-friendly placeholder - the actual number will be updated via webhook
+      phoneNumber = `Pending - Check Dashboard (ID: ${phoneNumberId.substring(0, 8)}...)`;
     }
 
     // Save phone number and assistant ID to firm record

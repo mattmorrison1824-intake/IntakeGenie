@@ -14,7 +14,7 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
   const router = useRouter();
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(true); // Default to open
-  const [transcriptOpen, setTranscriptOpen] = useState(false); // Default to closed
+  const [transcriptOpen, setTranscriptOpen] = useState(true); // Default to open so transcript is visible
 
   const intake = (call.intake_json as IntakeData) || {};
   const summary = (call.summary_json as SummaryData) || null;
@@ -276,18 +276,24 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
           )}
         </div>
 
-        {/* Full Transcript (Collapsible, Default Closed) */}
-        {(call.transcript_text || transcriptTurns.length > 0) && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-            <button
-              onClick={() => setTranscriptOpen(!transcriptOpen)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
+        {/* Full Transcript (Collapsible, Default Open) */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+          <button
+            onClick={() => setTranscriptOpen(!transcriptOpen)}
+            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
               <span className="font-semibold" style={{ color: '#0B1F3B' }}>Full Transcript</span>
-              {transcriptOpen ? <ChevronUp className="w-5 h-5" style={{ color: '#4A5D73' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#4A5D73' }} />}
-            </button>
-            {transcriptOpen && (
-              <div className="p-6 border-t border-gray-200">
+              {call.transcript_text ? (
+                <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">Available</span>
+              ) : (
+                <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-500">Not available</span>
+              )}
+            </div>
+            {transcriptOpen ? <ChevronUp className="w-5 h-5" style={{ color: '#4A5D73' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#4A5D73' }} />}
+          </button>
+          {transcriptOpen && (
+            <div className="p-6 border-t border-gray-200">
                 {transcriptTurns.length > 0 ? (
                   <div className="space-y-4">
                     {transcriptTurns.map((turn, idx) => (
@@ -319,13 +325,19 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
                   </div>
                 ) : (
                   <div className="text-sm text-center py-8" style={{ color: '#4A5D73', opacity: 0.8 }}>
-                    No transcript available
+                    <p className="mb-2">No transcript available for this call.</p>
+                    <p className="text-xs" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                      {call.status === 'transcribing' || call.status === 'summarizing' 
+                        ? 'Transcript is being processed...' 
+                        : call.status === 'error'
+                        ? 'Transcript generation failed. Recording may not be available.'
+                        : 'This call may not have been recorded or transcription is pending.'}
+                    </p>
                   </div>
                 )}
               </div>
             )}
           </div>
-        )}
       </div>
     </div>
   );

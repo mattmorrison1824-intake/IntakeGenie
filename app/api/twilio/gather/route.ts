@@ -109,10 +109,60 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Gather] Current state: ${state.state}, Filled fields: ${JSON.stringify(Object.keys(state.filled))}, History length: ${state.history.length}`);
 
+    // EXPLICIT STATE SKIPPING: Check if current state's field is already filled, skip to next state
+    // This prevents the AI from asking duplicate questions even if it doesn't follow instructions perfectly
+    const stateFieldMap: Record<string, keyof typeof state.filled> = {
+      'CONTACT_NAME': 'full_name',
+      'CONTACT_PHONE': 'callback_number',
+      'CONTACT_EMAIL': 'email',
+      'REASON': 'reason_for_call',
+      'INCIDENT_TIME': 'incident_date_or_timeframe',
+      'INCIDENT_LOCATION': 'incident_location',
+      'INJURY': 'injury_description',
+      'TREATMENT': 'medical_treatment_received',
+      'INSURANCE': 'insurance_involved',
+      'URGENCY': 'urgency_level',
+    };
+
+    const nextStateMap: Record<string, string> = {
+      'CONTACT_NAME': 'CONTACT_PHONE',
+      'CONTACT_PHONE': 'CONTACT_EMAIL',
+      'CONTACT_EMAIL': 'REASON',
+      'REASON': 'INCIDENT_TIME',
+      'INCIDENT_TIME': 'INCIDENT_LOCATION',
+      'INCIDENT_LOCATION': 'INJURY',
+      'INJURY': 'TREATMENT',
+      'TREATMENT': 'INSURANCE',
+      'INSURANCE': 'URGENCY',
+      'URGENCY': 'CONFIRM',
+    };
+
+    // Auto-skip state if field is already filled
+    let currentState = state.state;
+    let skippedStates: string[] = [];
+    while (stateFieldMap[currentState] && state.filled[stateFieldMap[currentState]] && nextStateMap[currentState]) {
+      const field = stateFieldMap[currentState];
+      const fieldValue = state.filled[field];
+      // Check if field has a valid value (not empty, not null, not undefined)
+      if (fieldValue && fieldValue !== '' && fieldValue !== 'unknown') {
+        skippedStates.push(currentState);
+        currentState = nextStateMap[currentState];
+        console.log(`[Gather] Auto-skipping state ${skippedStates[skippedStates.length - 1]} -> ${currentState} (field ${field} already filled: ${fieldValue})`);
+      } else {
+        break;
+      }
+    }
+
+    // Update state if we skipped any
+    if (skippedStates.length > 0) {
+      state.state = currentState;
+      console.log(`[Gather] Skipped ${skippedStates.length} state(s): ${skippedStates.join(' -> ')} -> ${currentState}`);
+    }
+
     // Call OpenAI to get next response
     const agentResponse = await processAgentTurn(
       {
-        state: state.state,
+        state: currentState, // Use potentially skipped state
         filled: state.filled,
         conversationHistory: state.history,
         firmName: firmName,

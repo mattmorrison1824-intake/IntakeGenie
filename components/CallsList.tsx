@@ -249,15 +249,22 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                       {formatDuration(call.started_at, call.ended_at)}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                          call.status === 'emailed' 
-                            ? 'bg-green-50 text-green-700' 
-                            : 'bg-gray-50 text-gray-700'
-                        }`}
-                      >
-                        {call.status === 'emailed' ? 'Resolved' : call.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                            call.status === 'emailed' 
+                              ? 'bg-green-50 text-green-700' 
+                              : 'bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          {call.status === 'emailed' ? 'Resolved' : call.status}
+                        </span>
+                        {call.transcript_text && (
+                          <span className="text-xs text-green-600" title="Transcript available">
+                            📝
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>

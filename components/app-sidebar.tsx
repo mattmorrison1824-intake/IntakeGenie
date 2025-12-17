@@ -68,10 +68,12 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
+                    size="lg"
                     isActive={pathname === item.url || (item.url !== '/dashboard' && item.url !== '/settings' && pathname.startsWith(item.url))}
+                    className="h-12 px-4 py-3 text-base"
                   >
-                    <Link href={item.url}>
-                      <item.icon />
+                    <Link href={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

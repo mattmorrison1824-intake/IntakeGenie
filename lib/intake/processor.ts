@@ -54,14 +54,14 @@ export async function upsertCall({
     // Create new call record
     console.log('[Upsert Call] Creating new call record for firmId:', firmId);
     
-    // Get firm's phone number for to_number
+    // Get firm's phone number for to_number (check new field first, fallback to old)
     const { data: firmData } = await supabase
       .from('firms')
-      .select('vapi_phone_number')
+      .select('inbound_number_e164, vapi_phone_number')
       .eq('id', firmId)
       .single();
     
-    const toNumber = (firmData as any)?.vapi_phone_number || '';
+    const toNumber = (firmData as any)?.inbound_number_e164 || (firmData as any)?.vapi_phone_number || '';
     
     const { data: newCall, error: insertError } = await supabase
       .from('calls')
@@ -137,14 +137,14 @@ export async function finalizeCall({
   if (callError || !callData) {
     console.warn('[Finalize Call] Call not found, creating it now');
     if (firmId) {
-      // Get firm's phone number for to_number
+      // Get firm's phone number for to_number (check new field first, fallback to old)
       const { data: firmData } = await supabase
         .from('firms')
-        .select('vapi_phone_number')
+        .select('inbound_number_e164, vapi_phone_number')
         .eq('id', firmId)
         .single();
       
-      const toNumber = (firmData as any)?.vapi_phone_number || '';
+      const toNumber = (firmData as any)?.inbound_number_e164 || (firmData as any)?.vapi_phone_number || '';
       
       const { data: newCall, error: createError } = await supabase
         .from('calls')

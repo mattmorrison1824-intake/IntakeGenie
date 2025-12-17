@@ -490,11 +490,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
+    return NextResponse.json({ ok: true }, { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  } catch (error: any) {
     console.error('[Vapi Webhook] Error:', error);
-    // Always return 200 to prevent Vapi retries
-    return NextResponse.json({ ok: true }, { status: 200 });
+    console.error('[Vapi Webhook] Error stack:', error?.stack);
+    // Always return 200 to prevent Vapi retries, even on errors
+    return NextResponse.json({ 
+      ok: true, 
+      error: error?.message || 'Unknown error',
+      note: 'Error logged but returning 200 to prevent retries'
+    }, { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 }
 

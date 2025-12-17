@@ -73,15 +73,17 @@ export async function POST(req: NextRequest) {
           },
         };
         
-        // Add interruptions and endCall configuration if available
-        if ((agentConfig as any).interruptions) {
-          assistantPayload.interruptions = (agentConfig as any).interruptions;
+        // Add stopSpeakingPlan to prevent interruptions
+        if ((agentConfig as any).stopSpeakingPlan) {
+          assistantPayload.stopSpeakingPlan = (agentConfig as any).stopSpeakingPlan;
         }
-        if ((agentConfig as any).endCallFunction) {
-          assistantPayload.endCallFunction = (agentConfig as any).endCallFunction;
+        // Add hooks for call ending
+        if ((agentConfig as any).hooks) {
+          assistantPayload.hooks = (agentConfig as any).hooks;
         }
-        if ((agentConfig as any).endCallPhrases) {
-          assistantPayload.endCallPhrases = (agentConfig as any).endCallPhrases;
+        // Add functions for call ending
+        if ((agentConfig as any).functions) {
+          assistantPayload.functions = (agentConfig as any).functions;
         }
         
         const assistantResponse = await vapi.post('/assistant', assistantPayload);

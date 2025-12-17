@@ -35,17 +35,22 @@ export async function POST(req: NextRequest) {
 
     const firm = firmData as any;
 
-    // Extract phone number ID from stored value (might be UUID or actual number)
-    const phoneNumberId = firm.vapi_phone_number?.includes('ID:') 
-      ? firm.vapi_phone_number.split('ID: ')[1]?.split(')')[0]
-      : firm.vapi_phone_number;
+    // Extract phone number ID from stored value
+    // Check if it's already a phone number
+    if (firm.vapi_phone_number?.match(/^\+?[1-9]\d{1,14}$/)) {
+      return NextResponse.json({ phoneNumber: firm.vapi_phone_number });
+    }
+    
+    // Extract ID from various formats
+    let phoneNumberId = firm.vapi_phone_number;
+    if (firm.vapi_phone_number?.includes('ID: ')) {
+      phoneNumberId = firm.vapi_phone_number.split('ID: ')[1]?.split(')')[0] || firm.vapi_phone_number;
+    } else if (firm.vapi_phone_number?.includes('Dashboard')) {
+      phoneNumberId = firm.vapi_phone_number.split('ID: ')[1]?.split('...')[0] || firm.vapi_phone_number;
+    }
 
     if (!phoneNumberId || phoneNumberId.length < 30) {
-      // If it's already a phone number format, return it
-      if (phoneNumberId?.match(/^\+?[1-9]\d{1,14}$/)) {
-        return NextResponse.json({ phoneNumber: phoneNumberId });
-      }
-      return NextResponse.json({ error: 'No phone number ID found' }, { status: 400 });
+      return NextResponse.json({ error: 'No valid phone number ID found' }, { status: 400 });
     }
 
     // Fetch phone number details from Vapi
@@ -68,9 +73,13 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ phoneNumber });
       } else {
+        // Vapi free phone numbers don't have a number field in the API
+        // The number is only visible in the dashboard
         return NextResponse.json({ 
-          message: 'Phone number not yet assigned by Vapi',
-          phoneNumberId: phoneNumberId
+          message: 'Phone number assigned by Vapi but not available via API',
+          phoneNumberId: phoneNumberId,
+          note: 'Check Vapi dashboard at https://dashboard.vapi.ai to see the actual phone number',
+          dashboardUrl: `https://dashboard.vapi.ai/phone-numbers/${phoneNumberId}`
         });
       }
     } catch (vapiError: any) {

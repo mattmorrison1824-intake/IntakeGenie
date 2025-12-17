@@ -152,11 +152,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 3: Fetch the phone number details to get the actual number
-    // Vapi may assign the number asynchronously, so we fetch it after a short delay
+    // Note: Vapi free phone numbers (provider: 'vapi') don't have a 'number' field in the API
+    // The number is assigned by Vapi and may only be visible in the dashboard
+    // We'll store the phone number ID and let users check the dashboard
     let phoneNumber: string | null = null;
     try {
-      // Wait a moment for Vapi to assign the number
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait a moment for Vapi to potentially assign the number
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       console.log('[Vapi Provision] Fetching phone number details...');
       const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
@@ -173,11 +175,14 @@ export async function POST(req: NextRequest) {
       console.error('[Vapi Provision] Error fetching phone number details:', vapiError?.response?.data || vapiError?.message);
     }
     
+    // Vapi free phone numbers don't return a number field - it's assigned asynchronously
+    // Store the ID and provide instructions to check dashboard
     if (!phoneNumber) {
-      // Phone number might be assigned asynchronously by Vapi
-      // For now, we'll store a placeholder and the user can check the Vapi dashboard
-      console.warn('[Vapi Provision] Phone number not yet assigned by Vapi. Check Vapi dashboard for the number.');
-      phoneNumber = `Pending assignment (ID: ${phoneNumberId})`;
+      console.warn('[Vapi Provision] Vapi free phone numbers are assigned asynchronously.');
+      console.warn('[Vapi Provision] Phone number ID:', phoneNumberId);
+      console.warn('[Vapi Provision] Check Vapi dashboard at https://dashboard.vapi.ai to see the assigned number.');
+      // Store a user-friendly message with the ID
+      phoneNumber = `Check Vapi Dashboard (ID: ${phoneNumberId.substring(0, 8)}...)`;
     }
 
     // Save phone number and assistant ID to firm record

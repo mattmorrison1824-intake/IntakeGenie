@@ -479,7 +479,7 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                     <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
                       Current number: {firm.vapi_phone_number || firm.twilio_number}
                     </p>
-                    {firm.vapi_phone_number && firm.vapi_phone_number.includes('ID:') && (
+                    {firm.vapi_phone_number && (firm.vapi_phone_number.includes('ID:') || firm.vapi_phone_number.includes('Dashboard')) && (
                       <div className="mt-2">
                         <button
                           type="button"
@@ -511,7 +511,10 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                                   onSave();
                                 }, 2000);
                               } else {
-                                setError('Phone number not yet assigned. Check Vapi dashboard.');
+                                setError(data.note || 'Phone number not yet available via API. Check Vapi dashboard.');
+                                if (data.dashboardUrl) {
+                                  window.open(data.dashboardUrl, '_blank');
+                                }
                               }
                             } catch (err: any) {
                               console.error('Error refreshing number:', err);
@@ -526,7 +529,7 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                           Refresh Number
                         </button>
                         <p className="text-xs text-gray-500 mt-1">
-                          Phone number is being assigned. Click to refresh.
+                          Vapi assigns numbers asynchronously. Check <a href="https://dashboard.vapi.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Vapi dashboard</a> to see the number.
                         </p>
                       </div>
                     )}

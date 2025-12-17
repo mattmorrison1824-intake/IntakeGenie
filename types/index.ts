@@ -23,7 +23,8 @@ export interface Firm {
   close_time: string; // "17:00"
   failover_ring_seconds: number;
   twilio_number: string | null; // Deprecated - kept for migration
-  vapi_phone_number: string | null; // Vapi phone number
+  vapi_phone_number: string | null; // Vapi phone number (or ID if number not yet assigned)
+  vapi_phone_number_id: string | null; // Vapi phone number ID for API lookups
   vapi_assistant_id: string | null; // Vapi assistant ID
   ai_greeting_custom: string | null;
   ai_tone: AITone;

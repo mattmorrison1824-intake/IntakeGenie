@@ -135,28 +135,52 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Update phone number to assign assistant and server URL
+    let updateResponse;
     try {
       console.log('[Vapi Provision] Updating phone number to assign assistant and server...');
-      const updateResponse = await vapi.patch(`/phone-number/${phoneNumberId}`, {
+      updateResponse = await vapi.patch(`/phone-number/${phoneNumberId}`, {
         assistantId: assistantId,
         server: {
           url: webhookUrl,
         },
       });
       console.log('[Vapi Provision] Phone number updated:', updateResponse.data);
-      
-      // Get the actual phone number from the updated response
-      phoneResponse.data = updateResponse.data; // Update with latest data
     } catch (vapiError: any) {
       console.error('[Vapi Provision] Phone number update error:', vapiError?.response?.data || vapiError?.message || vapiError);
       // Continue anyway - phone number is created, just not configured
       console.warn('[Vapi Provision] Phone number created but not fully configured');
     }
 
-    // Get phone number from response (might be in number field or we use the ID)
-    const phoneNumber = phoneResponse.data.number || phoneResponse.data.phoneNumber || phoneNumberId;
+    // Step 3: Fetch the phone number details to get the actual number
+    // Vapi may assign the number asynchronously, so we fetch it after a short delay
+    let phoneNumber: string | null = null;
+    try {
+      // Wait a moment for Vapi to assign the number
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('[Vapi Provision] Fetching phone number details...');
+      const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
+      console.log('[Vapi Provision] Phone number details:', getResponse.data);
+      
+      // Try various field names for the phone number
+      phoneNumber = getResponse.data.number 
+        || getResponse.data.phoneNumber 
+        || getResponse.data.phone 
+        || getResponse.data.value
+        || getResponse.data.numberValue
+        || null;
+    } catch (vapiError: any) {
+      console.error('[Vapi Provision] Error fetching phone number details:', vapiError?.response?.data || vapiError?.message);
+    }
+    
+    if (!phoneNumber) {
+      // Phone number might be assigned asynchronously by Vapi
+      // For now, we'll store a placeholder and the user can check the Vapi dashboard
+      console.warn('[Vapi Provision] Phone number not yet assigned by Vapi. Check Vapi dashboard for the number.');
+      phoneNumber = `Pending assignment (ID: ${phoneNumberId})`;
+    }
 
-    // Save number and assistant ID to firm record
+    // Save phone number and assistant ID to firm record
     const { error: updateError } = await supabase
       .from('firms')
       // @ts-ignore

@@ -135,20 +135,18 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 1: Create phone number with provider only (per Vapi API docs)
-    // For free Vapi numbers (provider: 'vapi'), create without assistantId first
-    // The number will be assigned asynchronously, then we can link the assistant
+    // Step 1: Create phone number with provider and assistantId
+    // According to Vapi docs, assistantId can be included in initial creation
     let phoneResponse;
     let phoneNumberId: string;
     // Declare phonePayload outside try block so it's accessible in catch
     const phonePayload: any = {
       provider: 'vapi', // Use Vapi's free phone number service
-      // Note: Do NOT include assistantId in initial creation for free numbers
-      // Free numbers are assigned asynchronously and may not be ready immediately
+      assistantId: assistantId, // Include assistantId - Vapi will assign when number is ready
     };
     
     try {
-      console.log('[Vapi Provision] Creating phone number...');
+      console.log('[Vapi Provision] Creating phone number with assistant...');
       console.log('[Vapi Provision] Payload:', JSON.stringify(phonePayload, null, 2));
       
       phoneResponse = await vapi.post('/phone-number', phonePayload);
@@ -164,16 +162,63 @@ export async function POST(req: NextRequest) {
         }, { status: 500 });
       }
       
-      // Step 2: For free Vapi numbers, skip PATCH assignment
-      // Free numbers are assigned asynchronously and may not have a valid number field yet
-      // PATCHing before the number is ready causes validation errors
-      // The assistant can be configured via Vapi dashboard once the number is assigned
-      console.log('[Vapi Provision] Phone number created successfully');
-      console.log('[Vapi Provision] Phone number ID:', phoneNumberId);
-      console.log('[Vapi Provision] Assistant ID:', assistantId);
-      console.log('[Vapi Provision] Note: For free Vapi numbers, the assistant must be configured via the Vapi dashboard once the number is assigned');
-      console.log('[Vapi Provision] Dashboard: https://dashboard.vapi.ai/phone-numbers');
-      // Skip PATCH - it will fail for free numbers that aren't ready yet
+      // Step 2: Poll phone number status and ensure assistant is assigned
+      // For free Vapi numbers, the number is assigned asynchronously
+      // We'll poll to check if number is ready, then verify/assign assistant
+      console.log('[Vapi Provision] Polling phone number status to ensure assistant assignment...');
+      
+      let assistantAssigned = false;
+      const maxAttempts = 10; // Try for up to 30 seconds (10 attempts * 3 seconds)
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds between attempts
+          
+          console.log(`[Vapi Provision] Checking phone number status (attempt ${attempt}/${maxAttempts})...`);
+          const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
+          const phoneData = getResponse.data;
+          
+          console.log('[Vapi Provision] Phone number data:', JSON.stringify(phoneData, null, 2));
+          
+          // Check if number is assigned (has a valid number field)
+          const hasNumber = phoneData.number && typeof phoneData.number === 'string' && phoneData.number.match(/^\+?[1-9]\d{1,14}$/);
+          
+          // Check if assistant is already assigned
+          if (phoneData.assistantId === assistantId) {
+            console.log('[Vapi Provision] Assistant already assigned!');
+            assistantAssigned = true;
+            break;
+          }
+          
+          // If number is ready but assistant isn't assigned, try to assign it
+          if (hasNumber && !phoneData.assistantId) {
+            console.log('[Vapi Provision] Number is ready, assigning assistant...');
+            try {
+              await vapi.patch(`/phone-number/${phoneNumberId}`, { 
+                assistantId: assistantId 
+              });
+              console.log('[Vapi Provision] Assistant assigned successfully!');
+              assistantAssigned = true;
+              break;
+            } catch (patchError: any) {
+              console.warn('[Vapi Provision] PATCH failed, will retry:', patchError?.response?.data || patchError?.message);
+              // Continue polling
+            }
+          } else if (!hasNumber) {
+            console.log('[Vapi Provision] Number not ready yet, continuing to poll...');
+          }
+        } catch (pollError: any) {
+          console.warn(`[Vapi Provision] Error polling (attempt ${attempt}):`, pollError?.response?.data || pollError?.message);
+          // Continue polling
+        }
+      }
+      
+      if (!assistantAssigned) {
+        console.warn('[Vapi Provision] Could not assign assistant after polling - number may still be processing');
+        console.warn('[Vapi Provision] Assistant will be assigned automatically when number is ready, or can be configured via dashboard');
+      } else {
+        console.log('[Vapi Provision] Phone number provisioned and assistant assigned successfully!');
+      }
     } catch (vapiError: any) {
       const errorDetails = vapiError?.response?.data || vapiError?.message || vapiError;
       const errorStatus = vapiError?.response?.status || 500;

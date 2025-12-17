@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Home, Settings, Phone } from "lucide-react"
+import { Home, Settings, Phone, Bot, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -26,6 +26,16 @@ const menuItems = [
     title: "Calls",
     url: "/calls",
     icon: Phone,
+  },
+  {
+    title: "AI Receptionist",
+    url: "/ai-receptionist",
+    icon: Bot,
+  },
+  {
+    title: "Knowledge Base",
+    url: "/knowledge-base",
+    icon: BookOpen,
   },
   {
     title: "Settings",
@@ -58,7 +68,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.url || (item.url !== '/dashboard' && pathname.startsWith(item.url))}
+                    isActive={pathname === item.url || (item.url !== '/dashboard' && item.url !== '/settings' && pathname.startsWith(item.url))}
                   >
                     <Link href={item.url}>
                       <item.icon />

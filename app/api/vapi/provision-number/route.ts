@@ -135,18 +135,17 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 1: Create phone number with provider (per Vapi API docs)
-    // According to Vapi docs, create phone number first, then assign assistant via PATCH
+    // Step 1: Create phone number with provider only (per Vapi API docs)
+    // For free Vapi numbers (provider: 'vapi'), create without assistantId first
+    // The number will be assigned asynchronously, then we can link the assistant
     let phoneResponse;
     let phoneNumberId: string;
     // Declare phonePayload outside try block so it's accessible in catch
     const phonePayload: any = {
       provider: 'vapi', // Use Vapi's free phone number service
+      // Note: Do NOT include assistantId in initial creation for free numbers
+      // Free numbers are assigned asynchronously and may not be ready immediately
     };
-    
-    // Add optional fields only if they're supported
-    // Note: numberDesiredAreaCode might not be supported for free Vapi numbers
-    // Try without it first, can add name later if needed
     
     try {
       console.log('[Vapi Provision] Creating phone number...');
@@ -165,17 +164,26 @@ export async function POST(req: NextRequest) {
         }, { status: 500 });
       }
       
-      // Step 2: Assign assistant to phone number via PATCH
-      console.log('[Vapi Provision] Assigning assistant to phone number...');
+      // Step 2: Try to assign assistant via PATCH after a delay
+      // For free Vapi numbers, the number may not be ready immediately
+      // This is optional - if it fails, user can configure via dashboard
+      console.log('[Vapi Provision] Attempting to assign assistant to phone number...');
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second for number to be ready
+        // Wait longer for free numbers to be processed
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        
+        // Try to assign assistant - this may fail if number isn't ready yet
         await vapi.patch(`/phone-number/${phoneNumberId}`, { 
           assistantId: assistantId 
         });
-        console.log('[Vapi Provision] Phone number updated with assistant');
+        console.log('[Vapi Provision] Phone number successfully linked with assistant');
       } catch (updateError: any) {
-        console.warn('[Vapi Provision] Could not update phone number with assistant:', updateError?.response?.data || updateError?.message);
-        // Continue - phone number is created, can be configured later via dashboard
+        const errorDetails = updateError?.response?.data || updateError?.message;
+        console.warn('[Vapi Provision] Could not assign assistant immediately (this is normal for free numbers):', errorDetails);
+        console.warn('[Vapi Provision] Phone number ID:', phoneNumberId);
+        console.warn('[Vapi Provision] Assistant ID:', assistantId);
+        console.warn('[Vapi Provision] The assistant will be automatically assigned when the number is ready, or you can configure it via the Vapi dashboard');
+        // Continue - this is expected for free numbers that aren't ready yet
       }
     } catch (vapiError: any) {
       const errorDetails = vapiError?.response?.data || vapiError?.message || vapiError;

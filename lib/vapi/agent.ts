@@ -6,15 +6,9 @@ export function buildVapiAgent(firmName: string, customGreeting?: string | null,
     ? customGreeting.replace(/{FIRM_NAME}/g, firmName)
     : `Thank you for calling ${firmName}. I'm an automated assistant for the firm. I can't give legal advice, but I can collect details so the firm can follow up. Are you in a safe place to talk right now?`;
 
-  const systemPrompt = `You are a professional legal intake assistant for ${firmName}.
-
-Rules:
-- One question at a time
-- Short sentences
-- Acknowledge before asking
-- Never give legal advice
-- Collect intake only
-- End with a clear next-step expectation${aiKnowledgeBase ? `\n\nFirm context: ${aiKnowledgeBase}` : ''}`;
+  // Note: Vapi doesn't support systemMessage/systemPrompt field
+  // System instructions will need to be configured via Vapi dashboard or model instructions
+  // For now, we just use the greeting as firstMessage
 
   return {
     model: {
@@ -25,14 +19,15 @@ Rules:
     },
     voice: {
       provider: 'deepgram',
-      voiceId: 'aura-asteria-en',
+      voiceId: 'asteria', // Vapi uses just the voice name, not 'aura-asteria-en'
     },
     transcriber: {
       provider: 'deepgram',
       model: 'nova-2',
     },
     firstMessage: greeting,
-    systemPrompt: systemPrompt,
+    // Note: Vapi doesn't support systemMessage/systemPrompt field
+    // System instructions will need to be configured via Vapi dashboard or model instructions
   };
 }
 

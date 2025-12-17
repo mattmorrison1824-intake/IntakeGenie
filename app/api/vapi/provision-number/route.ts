@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
         voice: agentConfig.voice,
         transcriber: agentConfig.transcriber,
         firstMessage: agentConfig.firstMessage,
-        systemPrompt: agentConfig.systemPrompt,
+        // Note: Vapi doesn't support systemMessage/systemPrompt field
+        // The system prompt context is embedded in firstMessage
         server: {
           url: webhookUrl,
         },
@@ -78,7 +79,8 @@ export async function POST(req: NextRequest) {
       
       console.log('[Vapi Provision] Creating assistant with payload:', JSON.stringify(assistantPayload, null, 2));
       
-      assistantResponse = await vapi.post('/assistants', assistantPayload);
+      // Vapi API uses /assistant (singular) endpoint
+      assistantResponse = await vapi.post('/assistant', assistantPayload);
       
       console.log('[Vapi Provision] Assistant created successfully:', assistantResponse.data);
     } catch (vapiError: any) {
@@ -109,7 +111,8 @@ export async function POST(req: NextRequest) {
     // Provision phone number with assistant and webhook
     let phoneResponse;
     try {
-      phoneResponse = await vapi.post('/phone-numbers', {
+      // Vapi API uses /phone-number (singular) endpoint
+      phoneResponse = await vapi.post('/phone-number', {
         assistantId: assistantId,
         server: {
           url: webhookUrl,

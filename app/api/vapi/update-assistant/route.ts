@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/clients/supabase';
 import { vapi } from '@/lib/clients/vapi';
 import { buildVapiAgent } from '@/lib/vapi/agent';
+import { cleanVapiPayload } from '@/lib/vapi/utils';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -116,9 +117,12 @@ export async function POST(req: NextRequest) {
       };
       
       console.log('[Update Assistant] Updating assistant:', firm.vapi_assistant_id);
-      console.log('[Update Assistant] Payload:', JSON.stringify(assistantPayload, null, 2));
       
-      const updateResponse = await vapi.patch(`/assistant/${firm.vapi_assistant_id}`, assistantPayload);
+      // Clean payload to remove undefined/null values before PATCH
+      const cleanedPayload = cleanVapiPayload(assistantPayload);
+      console.log('[Update Assistant] Payload:', JSON.stringify(cleanedPayload, null, 2));
+      
+      const updateResponse = await vapi.patch(`/assistant/${firm.vapi_assistant_id}`, cleanedPayload);
       
       console.log('[Update Assistant] Assistant updated successfully:', updateResponse.data);
       

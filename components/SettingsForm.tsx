@@ -68,6 +68,8 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
   const [success, setSuccess] = useState(false);
   const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null);
   const [manualTwilioNumber, setManualTwilioNumber] = useState('');
+  const [areaCode, setAreaCode] = useState('');
+  const [provisioning, setProvisioning] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -422,74 +424,127 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                 >
                   Phone Number
           </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!supabase || !firm) return;
-                      
-                      setLoading(true);
-                      setError(null);
-                      
-                      try {
-                        const response = await fetch('/api/vapi/provision-number', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ 
-                            firmId: firm.id
-                          }),
-                        });
-
-                        const data = await response.json();
+                {!firm.inbound_number_e164 && !firm.vapi_phone_number_id && (
+                  <div className="space-y-3">
+                    <div>
+                      <label 
+                        htmlFor="area_code" 
+                        className="block text-xs font-medium mb-1.5"
+                        style={{ color: '#4A5D73' }}
+                      >
+                        Area Code (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="area_code"
+                        value={areaCode}
+                        onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                        placeholder="e.g., 415"
+                        className="w-full h-10 px-3 rounded-lg border text-sm"
+                        style={{
+                          borderColor: '#E5E7EB',
+                          backgroundColor: '#FFFFFF',
+                        }}
+                        disabled={provisioning}
+                      />
+                      <p className="text-xs mt-1" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                        Leave blank for any available number
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!firm.inbound_number_e164 && !firm.vapi_phone_number_id && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!supabase || !firm) return;
                         
-                        if (!response.ok) {
-                          // Extract error message - handle array format
-                          let errorMsg = 'Failed to provision number';
-                          if (data.message) {
-                            if (Array.isArray(data.message)) {
-                              errorMsg = data.message.join(', ');
-                            } else {
-                              errorMsg = data.message;
-                            }
-                          } else if (data.error) {
-                            errorMsg = data.error;
-                          } else if (data.details) {
-                            errorMsg = typeof data.details === 'string' ? data.details : JSON.stringify(data.details);
-                          }
-                          console.error('Provision error details:', data);
-                          throw new Error(errorMsg);
-                        }
+                        setProvisioning(true);
+                        setLoading(true);
+                        setError(null);
+                        
+                        try {
+                          const response = await fetch('/api/telephony/provision', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ 
+                              firmId: firm.id,
+                              areaCode: areaCode || undefined,
+                            }),
+                          });
 
-                        setSuccess(true);
-                        setTimeout(() => {
-                          setSuccess(false);
-                          onSave();
-                        }, 2000);
-                      } catch (err: any) {
-                        console.error('Error provisioning number:', err);
-                        setError(err.message || 'Failed to provision number. Check browser console for details.');
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    disabled={loading}
-                    className="h-12 px-6 rounded-lg font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundColor: loading ? '#4A5D73' : '#0B1F3B',
-                      color: '#FFFFFF',
-                    }}
-                  >
-                    {loading ? 'Provisioning...' : 'Provision Phone Number'}
-                  </button>
-                </div>
+                          const data = await response.json();
+                          
+                          if (!response.ok) {
+                            // Extract error message - handle array format
+                            let errorMsg = 'Failed to provision number';
+                            if (data.message) {
+                              if (Array.isArray(data.message)) {
+                                errorMsg = data.message.join(', ');
+                              } else {
+                                errorMsg = data.message;
+                              }
+                            } else if (data.error) {
+                              errorMsg = data.error;
+                            } else if (data.details) {
+                              errorMsg = typeof data.details === 'string' ? data.details : JSON.stringify(data.details);
+                            }
+                            console.error('Provision error details:', data);
+                            throw new Error(errorMsg);
+                          }
+
+                          setSuccess(true);
+                          setAreaCode('');
+                          setTimeout(() => {
+                            setSuccess(false);
+                            onSave();
+                          }, 2000);
+                        } catch (err: any) {
+                          console.error('Error provisioning number:', err);
+                          setError(err.message || 'Failed to provision number. Check browser console for details.');
+                        } finally {
+                          setLoading(false);
+                          setProvisioning(false);
+                        }
+                      }}
+                      disabled={loading || provisioning}
+                      className="h-12 px-6 rounded-lg font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: (loading || provisioning) ? '#4A5D73' : '#0B1F3B',
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      {loading || provisioning ? 'Provisioning...' : 'Provision Phone Number'}
+                    </button>
+                  </div>
+                )}
                 <p className="mt-1.5 text-xs" style={{ color: '#4A5D73', opacity: 0.7 }}>
                   Each firm is assigned a dedicated AI intake number automatically. Calls to this number are handled by IntakeGenie.
                 </p>
-                {(firm.vapi_phone_number || firm.twilio_number) && (
+                {(firm.inbound_number_e164 || firm.vapi_phone_number || firm.twilio_number) && (
                   <div className="mt-2">
-                    {firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) ? (
+                    {firm.inbound_number_e164 ? (
+                      <div className="flex items-center justify-between p-2 rounded border" style={{ borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' }}>
+                        <p className="text-sm font-semibold" style={{ color: '#0B1F3B' }}>
+                          {firm.inbound_number_e164}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(firm.inbound_number_e164!);
+                            setSuccess(true);
+                            setTimeout(() => setSuccess(false), 2000);
+                          }}
+                          className="px-3 py-1 text-xs rounded font-medium"
+                          style={{ backgroundColor: '#0B1F3B', color: '#FFFFFF' }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    ) : firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) ? (
                       <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
                         Current number: {firm.vapi_phone_number}
                       </p>
@@ -526,13 +581,7 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                             setError(null);
                             
                             try {
-                              const response = await fetch('/api/vapi/refresh-phone-number', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ firmId: firm.id }),
-                              });
+                              const response = await fetch(`/api/telephony/refresh-number?firmId=${firm.id}`);
 
                               const data = await response.json();
                               

@@ -23,9 +23,12 @@ export interface Firm {
   close_time: string; // "17:00"
   failover_ring_seconds: number;
   twilio_number: string | null; // Deprecated - kept for migration
-  vapi_phone_number: string | null; // Vapi phone number (or ID if number not yet assigned)
+  vapi_phone_number: string | null; // Deprecated - kept for migration
   vapi_phone_number_id: string | null; // Vapi phone number ID for API lookups
   vapi_assistant_id: string | null; // Vapi assistant ID
+  inbound_number_e164: string | null; // E.164 formatted phone number (e.g., +15551234567)
+  twilio_phone_number_sid: string | null; // Twilio phone number SID (e.g., PN...)
+  telephony_provider: string | null; // Telephony provider type: 'twilio_imported_into_vapi', 'vapi_free', etc.
   ai_greeting_custom: string | null;
   ai_tone: AITone;
   ai_knowledge_base: string | null;

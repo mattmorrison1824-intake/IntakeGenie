@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/clients/supabase';
 import { vapi } from '@/lib/clients/vapi';
 import { buildVapiAgent } from '@/lib/vapi/agent';
+import { cleanVapiPayload } from '@/lib/vapi/utils';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -133,7 +134,8 @@ export async function POST(req: NextRequest) {
       
       // Update phone number to assign assistant (webhook is already on assistant)
       console.log('[Link Number] Updating phone number with assistantId:', assistantId);
-      await vapi.patch(`/phone-number/${phoneNumberId}`, { assistantId: assistantId });
+      const patchPayload = cleanVapiPayload({ assistantId: assistantId });
+      await vapi.patch(`/phone-number/${phoneNumberId}`, patchPayload);
       console.log('[Link Number] Phone number updated with assistant');
       
     } catch (vapiError: any) {

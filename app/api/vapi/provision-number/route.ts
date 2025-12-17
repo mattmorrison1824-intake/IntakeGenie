@@ -140,10 +140,19 @@ export async function POST(req: NextRequest) {
     let phoneResponse;
     let phoneNumberId: string;
     // Declare phonePayload outside try block so it's accessible in catch
+    // NOTE: Free Vapi numbers are disabled for production use
+    // Use /api/telephony/provision instead which purchases Twilio numbers and imports to Vapi
     const phonePayload: any = {
-      provider: 'vapi', // Use Vapi's free phone number service
-      assistantId: assistantId, // Include assistantId - Vapi will assign when number is ready
+      provider: 'vapi', // DEPRECATED: Free Vapi numbers - use Twilio + Vapi import instead
+      assistantId: assistantId,
     };
+    
+    // Return error for production - free numbers cause async issues
+    return NextResponse.json({
+      error: 'Free Vapi number provisioning is disabled',
+      message: 'Please use the new phone number provisioning which purchases Twilio numbers and imports them into Vapi. This ensures immediate number assignment and reliable operation.',
+      useEndpoint: '/api/telephony/provision',
+    }, { status: 400 });
     
     try {
       console.log('[Vapi Provision] Creating phone number with assistant...');

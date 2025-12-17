@@ -123,8 +123,8 @@ export default async function DashboardPage() {
                       </div>
                       </div>
 
-              {/* IntakeGenie Number Card */}
-              {(firm.vapi_phone_number || firm.twilio_number) && (
+              {/* IntakeGenie Number Card - Show if any number field exists */}
+              {(firm.inbound_number_e164 || firm.vapi_phone_number_id || firm.vapi_phone_number || firm.twilio_number) && (
                 <div 
                   className="bg-white rounded-xl shadow-sm p-8"
                   style={{
@@ -135,27 +135,35 @@ export default async function DashboardPage() {
                     <h2 className="text-lg font-semibold mb-1" style={{ color: '#4A5D73' }}>
                       Your IntakeGenie Number
                     </h2>
-                    </div>
-                  <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
-                    {firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) 
-                      ? firm.vapi_phone_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
-                      : firm.twilio_number 
-                        ? firm.twilio_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
-                        : firm.vapi_phone_number && firm.vapi_phone_number.includes('Pending')
-                          ? 'Number being assigned...'
-                          : 'No number assigned'}
                   </div>
-                  {firm.vapi_phone_number && !firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) && (
+                  <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
+                    {firm.inbound_number_e164 
+                      ? firm.inbound_number_e164.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
+                      : firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) 
+                        ? firm.vapi_phone_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
+                        : firm.twilio_number 
+                          ? firm.twilio_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')
+                          : firm.vapi_phone_number_id
+                            ? 'Number being assigned...'
+                            : 'No number assigned'}
+                  </div>
+                  {firm.vapi_phone_number_id && !firm.inbound_number_e164 && (
                     <p className="text-sm mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
-                      The number will appear here after the first call or check the{' '}
+                      The number is being assigned. It will appear here automatically once ready.
+                      {' '}
                       <a 
-                        href="https://dashboard.vapi.ai/phone-numbers" 
+                        href={`https://dashboard.vapi.ai/phone-numbers/${firm.vapi_phone_number_id}`}
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline"
                       >
-                        Vapi Dashboard
+                        View in Vapi Dashboard
                       </a>
+                    </p>
+                  )}
+                  {firm.inbound_number_e164 && firm.telephony_provider && (
+                    <p className="text-xs mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                      Provider: {firm.telephony_provider === 'twilio_imported_into_vapi' ? 'Twilio + Vapi' : firm.telephony_provider}
                     </p>
                   )}
                 </div>

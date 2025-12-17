@@ -72,7 +72,8 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    console.log(`[Assign Phone] Found firm: ${firmData.id} (${(firmData as any).firm_name})`);
+    const firm = firmData as any;
+    console.log(`[Assign Phone] Found firm: ${firm.id} (${firm.firm_name})`);
 
     // Update firm with phone number
     const { error: updateError } = await supabase
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
         vapi_phone_number: phoneNumber,
         // Keep existing assistant ID if it exists
       })
-      .eq('id', firmData.id);
+      .eq('id', firm.id);
 
     if (updateError) {
       console.error('[Assign Phone] Error updating firm:', updateError);
@@ -92,13 +93,13 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    console.log(`[Assign Phone] ✅ Successfully assigned phone number ${phoneNumber} to firm ${(firmData as any).firm_name}`);
+    console.log(`[Assign Phone] ✅ Successfully assigned phone number ${phoneNumber} to firm ${firm.firm_name}`);
 
     return NextResponse.json({ 
       success: true,
       message: `Phone number ${phoneNumber} assigned to ${userEmail}`,
-      firmId: firmData.id,
-      firmName: (firmData as any).firm_name,
+      firmId: firm.id,
+      firmName: firm.firm_name,
       phoneNumber: phoneNumber
     });
   } catch (error: any) {

@@ -20,19 +20,22 @@ export async function middleware(request: NextRequest) {
     '/api/test-transcription',
   ];
   
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route)) || pathname === '/api/vapi/webhook';
+  // Check if this is a public route - must check exact match for /api/vapi/webhook first
+  const isPublicRoute = 
+    pathname === '/api/vapi/webhook' ||
+    pathname.startsWith('/api/twilio') ||
+    pathname.startsWith('/api/audio') ||
+    pathname.startsWith('/api/process-call') ||
+    pathname.startsWith('/api/test-email') ||
+    pathname.startsWith('/api/test-intake-email') ||
+    pathname.startsWith('/api/test-voice-latency') ||
+    pathname.startsWith('/api/test-transcription');
   
   if (isPublicRoute) {
     console.log(`[Middleware] Allowing public route: ${method} ${pathname}`);
     // Return immediately without any modifications to preserve the request
-    // Use rewrite to ensure no authentication checks happen
-    return NextResponse.next({
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+    // CRITICAL: Do NOT create Supabase client or check session for public routes
+    return NextResponse.next();
   }
 
   if (pathname === '/' || pathname === '/login') {

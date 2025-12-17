@@ -78,6 +78,7 @@ export interface SummaryData {
 
 export type ConversationState =
   | 'START'
+  | 'EMERGENCY_CHECK'
   | 'EMERGENCY'
   | 'CONTACT_NAME'
   | 'CONTACT_PHONE'

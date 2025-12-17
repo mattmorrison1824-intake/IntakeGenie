@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTwiML, normalizeAppUrl, getTTSAudioUrl, triggerSpeculativeTTS } from '@/lib/clients/twilio';
+import { generateTwiML, normalizeAppUrl, getTTSAudioUrl } from '@/lib/clients/twilio';
 import { createServiceClient } from '@/lib/clients/supabase';
 import { processAgentTurn } from '@/lib/clients/openai';
 import { ConversationState, IntakeData } from '@/types';
@@ -50,16 +50,18 @@ export async function POST(request: NextRequest) {
     let firmName: string | null = null;
     let aiTone: string | null = null;
     let aiKnowledgeBase: string | null = null;
+    let customGreeting: string | null = null;
     if (firmId) {
       try {
         const { data: firmData } = await supabase
           .from('firms')
-          .select('firm_name, ai_tone, ai_knowledge_base')
+          .select('firm_name, ai_tone, ai_knowledge_base, ai_greeting_custom')
           .eq('id', firmId)
           .single();
         firmName = (firmData as any)?.firm_name || null;
         aiTone = (firmData as any)?.ai_tone || 'professional';
         aiKnowledgeBase = (firmData as any)?.ai_knowledge_base || null;
+        customGreeting = (firmData as any)?.ai_greeting_custom || null;
       } catch (error) {
         console.error('[Gather] Error fetching firm data:', error);
       }
@@ -67,20 +69,45 @@ export async function POST(request: NextRequest) {
 
     // Get or initialize conversation state
     let state = conversationState.get(callSid);
+    
     if (!state) {
+      // First gather call - greeting was already played in stream route
+      // We need to reconstruct what greeting was played to add it to history
+      // This matches the exact greeting logic from stream route
+      const firmNameText = firmName || 'the firm';
+      let greetingText: string;
+      
+      if (customGreeting) {
+        // Use custom greeting, replacing {FIRM_NAME} placeholder (same as stream route)
+        greetingText = customGreeting.replace(/{FIRM_NAME}/g, firmNameText);
+      } else {
+        // Use default greeting (match stream route exactly)
+        greetingText = `Thank you for calling ${firmNameText}. I'm an automated assistant for the firm. I can't give legal advice. But I can collect your information so the firm can follow up. Are you in a safe place to talk right now?`;
+      }
+      
       state = {
-        state: 'START',
+        state: 'EMERGENCY_CHECK', // Skip START since greeting already played
         filled: {},
-        history: [],
+        history: [
+          // Add greeting to history so AI knows it was already said and won't repeat it
+          {
+            role: 'assistant',
+            content: greetingText,
+          },
+        ],
       };
       conversationState.set(callSid, state);
+      console.log(`[Gather] Initialized conversation state for call ${callSid}, starting at EMERGENCY_CHECK (greeting already played: "${greetingText.substring(0, 50)}...")`);
     }
 
     // Process user utterance
     const userUtterance = speechResult || '';
     if (userUtterance) {
       state.history.push({ role: 'user', content: userUtterance });
+      console.log(`[Gather] User said: "${userUtterance.substring(0, 50)}..."`);
     }
+
+    console.log(`[Gather] Current state: ${state.state}, Filled fields: ${JSON.stringify(Object.keys(state.filled))}, History length: ${state.history.length}`);
 
     // Call OpenAI to get next response
     const agentResponse = await processAgentTurn(
@@ -94,6 +121,8 @@ export async function POST(request: NextRequest) {
       },
       userUtterance || 'Hello'
     );
+
+    console.log(`[Gather] Agent response: state=${agentResponse.next_state}, updates=${JSON.stringify(Object.keys(agentResponse.updates))}, done=${agentResponse.done}`);
 
     // Override closing script with exact required text
     let responseText = agentResponse.assistant_say;

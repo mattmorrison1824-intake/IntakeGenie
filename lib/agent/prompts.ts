@@ -107,6 +107,7 @@ Conversation flow:
 
 export const STATE_DESCRIPTIONS: Record<string, string> = {
   START: `Greeting + ONE-TIME disclosure. If firm name is provided, say: "Thank you for calling {FIRM_NAME}. I'm an automated assistant for the firm. I'm not a lawyer and I can't provide legal advice, but I can take your information so the firm can follow up. Are you in a safe place to talk right now?" Otherwise use generic greeting. This is the ONLY time to mention being an AI or legal advice restrictions.`,
+  EMERGENCY_CHECK: `Check if the user is safe to talk. If they responded affirmatively to "Are you in a safe place to talk?", acknowledge and move to CONTACT_NAME. If they indicate they're not safe or in danger, move to EMERGENCY state. Ask: "Great. What's your full name?" and move to CONTACT_NAME.`,
   EMERGENCY: `If emergency detected, say: "If you're in immediate danger or need urgent medical help, please call 911 right now. I'm going to end this call so you can do that." Set emergency_redirected=true, done=true.`,
   CONTACT_NAME: `Check filled.full_name first. If present, skip to CONTACT_PHONE immediately. Otherwise, ask naturally: "Great. What's your full name?" Extract full_name from response.`,
   CONTACT_PHONE: `Check filled.callback_number first. If present, skip to CONTACT_EMAIL immediately. Otherwise, ask naturally: "Thanks. What's the best phone number for the firm to call you back?" Extract callback_number from response.`,

@@ -254,22 +254,32 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
           </div>
         )}
 
-        {/* Full Transcript */}
-        <div className="bg-white rounded-xl shadow-sm p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold" style={{ color: '#0B1F3B' }}>
-              Full Transcript
-            </h2>
-            {call.recording_url && (
+        {/* Call Recording */}
+        {call.recording_url && (
+          <div className="bg-white rounded-xl shadow-sm p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold" style={{ color: '#0B1F3B' }}>
+                Call Recording
+              </h2>
               <Button
                 className="h-9 px-4 rounded-lg font-semibold text-sm"
                 style={{ backgroundColor: '#0B1F3B', color: '#FFFFFF' }}
                 onClick={() => window.open(call.recording_url || '', '_blank')}
               >
-                GENERATE AUDIO
+                Listen to Recording
               </Button>
-            )}
+            </div>
+            <p className="text-sm" style={{ color: '#4A5D73' }}>
+              Click the button above to listen to the full call recording in a new tab.
+            </p>
           </div>
+        )}
+
+        {/* Full Transcript */}
+        <div className="bg-white rounded-xl shadow-sm p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: '#0B1F3B' }}>
+            Full Transcript
+          </h2>
           
           {transcriptTurns.length > 0 ? (
             <div className="space-y-4">

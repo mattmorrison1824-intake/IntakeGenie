@@ -121,7 +121,7 @@ AI Receptionist: Thank you. I've shared this information with the firm. Someone 
     const sampleRecordingUrl = 'https://api.twilio.com/2010-04-01/Accounts/ACxxxxx/Recordings/RExxxxx.mp3';
 
     try {
-      await sendIntakeEmail(
+      const emailResult = await sendIntakeEmail(
         [to],
         sampleIntake,
         sampleSummary,
@@ -130,18 +130,24 @@ AI Receptionist: Thank you. I've shared this information with the firm. Someone 
         'normal' as UrgencyLevel
       );
 
-      console.log('[Test Intake Email] Sample intake email sent successfully');
+      console.log('[Test Intake Email] Sample intake email sent successfully:', emailResult);
       return NextResponse.json({
         success: true,
         message: 'Sample intake email sent successfully',
         recipient: to,
+        emailId: emailResult?.id || 'unknown',
+        from: 'IntakeGenie <onboarding@resend.dev>',
+        note: 'Check your inbox and spam folder. Emails from onboarding@resend.dev may go to spam.',
       });
     } catch (error) {
       console.error('[Test Intake Email] Error sending email:', error);
+      const errorDetails = error instanceof Error ? error.message : 'Unknown error';
       return NextResponse.json(
         {
           error: 'Failed to send sample intake email',
-          details: error instanceof Error ? error.message : 'Unknown error',
+          details: errorDetails,
+          recipient: to,
+          hint: 'Check server logs for detailed error information. Verify RESEND_API_KEY is configured correctly.',
         },
         { status: 500 }
       );

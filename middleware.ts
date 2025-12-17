@@ -13,7 +13,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/twilio') || 
     pathname.startsWith('/api/audio') ||
     pathname.startsWith('/api/test-email') ||
-    pathname.startsWith('/api/test-intake-email')
+    pathname.startsWith('/api/test-intake-email') ||
+    pathname.startsWith('/api/test-voice-latency')
   ) {
     console.log(`[Middleware] Allowing public route: ${method} ${pathname}`);
     // Return immediately without any modifications to preserve the request

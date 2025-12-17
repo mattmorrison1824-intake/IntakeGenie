@@ -56,12 +56,24 @@ export async function POST(req: NextRequest) {
     // Fetch phone number details from Vapi
     try {
       const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
-      const phoneNumber = getResponse.data.number 
-        || getResponse.data.phoneNumber 
-        || getResponse.data.phone 
-        || getResponse.data.value
-        || getResponse.data.numberValue
-        || null;
+      const data = getResponse.data;
+      
+      // Check all possible locations for the phone number
+      const phoneNumber = 
+        data.number ||                                    // Top-level number
+        data.phoneNumber ||                               // Alternative top-level
+        data.phone ||                                     // Short form
+        data.value ||                                     // Generic value
+        data.numberValue ||                               // Number value
+        data.inboundPhoneNumber ||                        // Inbound number
+        data.outboundPhoneNumber ||                       // Outbound number
+        data.fallbackDestination?.number ||              // Fallback destination number
+        data.fallbackDestination?.callerId ||             // Fallback caller ID
+        (data.fallbackDestination && typeof data.fallbackDestination === 'string' ? data.fallbackDestination : null) || // Fallback as string
+        null;
+      
+      console.log('[Refresh Phone] Full response:', JSON.stringify(data, null, 2));
+      console.log('[Refresh Phone] Extracted number:', phoneNumber);
 
       if (phoneNumber) {
         // Update firm with actual phone number

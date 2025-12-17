@@ -152,37 +152,50 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 3: Fetch the phone number details to get the actual number
-    // Note: Vapi free phone numbers (provider: 'vapi') don't have a 'number' field in the API
-    // The number is assigned by Vapi and may only be visible in the dashboard
-    // We'll store the phone number ID and let users check the dashboard
+    // Vapi may assign numbers asynchronously, so we check multiple times with delays
     let phoneNumber: string | null = null;
-    try {
-      // Wait a moment for Vapi to potentially assign the number
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('[Vapi Provision] Fetching phone number details...');
-      const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
-      console.log('[Vapi Provision] Phone number details:', getResponse.data);
-      
-      // Try various field names for the phone number
-      phoneNumber = getResponse.data.number 
-        || getResponse.data.phoneNumber 
-        || getResponse.data.phone 
-        || getResponse.data.value
-        || getResponse.data.numberValue
-        || null;
-    } catch (vapiError: any) {
-      console.error('[Vapi Provision] Error fetching phone number details:', vapiError?.response?.data || vapiError?.message);
+    
+    // Try fetching the number with increasing delays (Vapi may need time to assign)
+    for (const delay of [1000, 3000, 5000]) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        console.log(`[Vapi Provision] Fetching phone number details (attempt after ${delay}ms)...`);
+        const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
+        console.log('[Vapi Provision] Phone number details:', JSON.stringify(getResponse.data, null, 2));
+        
+        const data = getResponse.data;
+        
+        // Check all possible locations for the phone number
+        phoneNumber = 
+          data.number ||                                    // Top-level number
+          data.phoneNumber ||                               // Alternative top-level
+          data.phone ||                                     // Short form
+          data.value ||                                     // Generic value
+          data.numberValue ||                               // Number value
+          data.inboundPhoneNumber ||                        // Inbound number
+          data.outboundPhoneNumber ||                       // Outbound number
+          data.fallbackDestination?.number ||              // Fallback destination number
+          data.fallbackDestination?.callerId ||             // Fallback caller ID
+          (data.fallbackDestination && typeof data.fallbackDestination === 'string' ? data.fallbackDestination : null) || // Fallback as string
+          null;
+        
+        if (phoneNumber) {
+          console.log('[Vapi Provision] Found phone number:', phoneNumber);
+          break; // Found it, stop trying
+        }
+      } catch (vapiError: any) {
+        console.error(`[Vapi Provision] Error fetching phone number (attempt ${delay}ms):`, vapiError?.response?.data || vapiError?.message);
+      }
     }
     
-    // Vapi free phone numbers don't return a number field - it's assigned asynchronously
-    // Store the ID and provide instructions to check dashboard
+    // If still no number, it may be assigned later - store ID for now
     if (!phoneNumber) {
-      console.warn('[Vapi Provision] Vapi free phone numbers are assigned asynchronously.');
+      console.warn('[Vapi Provision] Phone number not yet assigned by Vapi API.');
       console.warn('[Vapi Provision] Phone number ID:', phoneNumberId);
-      console.warn('[Vapi Provision] Check Vapi dashboard at https://dashboard.vapi.ai to see the assigned number.');
-      // Store a user-friendly message with the ID
-      phoneNumber = `Check Vapi Dashboard (ID: ${phoneNumberId.substring(0, 8)}...)`;
+      console.warn('[Vapi Provision] Number may be assigned asynchronously. Will be available after provisioning completes.');
+      // Store the ID - we can refresh later
+      phoneNumber = phoneNumberId; // Store ID temporarily
     }
 
     // Save phone number and assistant ID to firm record

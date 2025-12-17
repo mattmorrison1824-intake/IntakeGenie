@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (!assistantId) {
       // Create assistant
       try {
-        const assistantPayload = {
+        const assistantPayload: any = {
           name: `${firm.firm_name} Intake Assistant`,
           model: agentConfig.model,
           voice: agentConfig.voice,
@@ -72,6 +72,17 @@ export async function POST(req: NextRequest) {
             url: webhookUrl,
           },
         };
+        
+        // Add interruptions and endCall configuration if available
+        if ((agentConfig as any).interruptions) {
+          assistantPayload.interruptions = (agentConfig as any).interruptions;
+        }
+        if ((agentConfig as any).endCallFunction) {
+          assistantPayload.endCallFunction = (agentConfig as any).endCallFunction;
+        }
+        if ((agentConfig as any).endCallPhrases) {
+          assistantPayload.endCallPhrases = (agentConfig as any).endCallPhrases;
+        }
         
         const assistantResponse = await vapi.post('/assistant', assistantPayload);
         assistantId = assistantResponse.data.id;

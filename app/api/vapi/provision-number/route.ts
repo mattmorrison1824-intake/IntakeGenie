@@ -64,18 +64,27 @@ export async function POST(req: NextRequest) {
     // Create assistant first
     let assistantResponse;
     try {
-      const assistantPayload = {
+      const assistantPayload: any = {
         name: `${firm.firm_name} Intake Assistant`,
         model: agentConfig.model,
         voice: agentConfig.voice,
         transcriber: agentConfig.transcriber,
         firstMessage: agentConfig.firstMessage,
-        // Note: Vapi doesn't support systemMessage/systemPrompt field
-        // The system prompt context is embedded in firstMessage
         server: {
           url: webhookUrl,
         },
       };
+      
+      // Add interruptions and endCall configuration if available
+      if ((agentConfig as any).interruptions) {
+        assistantPayload.interruptions = (agentConfig as any).interruptions;
+      }
+      if ((agentConfig as any).endCallFunction) {
+        assistantPayload.endCallFunction = (agentConfig as any).endCallFunction;
+      }
+      if ((agentConfig as any).endCallPhrases) {
+        assistantPayload.endCallPhrases = (agentConfig as any).endCallPhrases;
+      }
       
       console.log('[Vapi Provision] Creating assistant with payload:', JSON.stringify(assistantPayload, null, 2));
       

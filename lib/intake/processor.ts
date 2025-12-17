@@ -17,16 +17,21 @@ export async function upsertCall({
 }) {
   const supabase = createServiceClient();
 
+  console.log('[Upsert Call] conversationId:', conversationId, 'firmId:', firmId);
+
   // Find or create call record
-  const { data: existingCall } = await supabase
+  const { data: existingCall, error: findError } = await supabase
     .from('calls')
     .select('id')
     .eq('vapi_conversation_id', conversationId)
-    .single();
+    .maybeSingle();
+
+  console.log('[Upsert Call] Existing call lookup:', existingCall, 'Error:', findError);
 
   if (existingCall && (existingCall as any).id) {
     // Update existing call
-    await supabase
+    console.log('[Upsert Call] Updating existing call:', (existingCall as any).id);
+    const { error: updateError } = await supabase
       .from('calls')
       // @ts-ignore
       .update({
@@ -35,9 +40,14 @@ export async function upsertCall({
         urgency: intake?.urgency_level === 'high' ? 'high' : intake?.emergency_redirected ? 'emergency_redirected' : 'normal',
       })
       .eq('id', (existingCall as any).id);
+    
+    if (updateError) {
+      console.error('[Upsert Call] Error updating call:', updateError);
+    }
   } else if (firmId) {
     // Create new call record
-    await supabase
+    console.log('[Upsert Call] Creating new call record for firmId:', firmId);
+    const { data: newCall, error: insertError } = await supabase
       .from('calls')
       // @ts-ignore
       .insert({
@@ -47,7 +57,20 @@ export async function upsertCall({
         status: 'in_progress',
         urgency: intake?.urgency_level === 'high' ? 'high' : intake?.emergency_redirected ? 'emergency_redirected' : 'normal',
         started_at: new Date().toISOString(),
-      });
+        from_number: '', // Will be updated in finalizeCall
+        to_number: '', // Will be updated in finalizeCall
+        route_reason: 'after_hours', // Default for Vapi calls
+      })
+      .select()
+      .single();
+    
+    if (insertError) {
+      console.error('[Upsert Call] Error creating call:', insertError);
+    } else {
+      console.log('[Upsert Call] Call created successfully:', newCall);
+    }
+  } else {
+    console.warn('[Upsert Call] No firmId provided and no existing call found. Cannot create call record.');
   }
 }
 
@@ -67,32 +90,82 @@ export async function finalizeCall({
 }) {
   const supabase = createServiceClient();
 
+  console.log('[Finalize Call] conversationId:', conversationId, 'firmId:', firmId, 'phoneNumber:', phoneNumber);
+
   // Find call record
   const { data: callData, error: callError } = await supabase
     .from('calls')
     .select('*, firms(*)')
     .eq('vapi_conversation_id', conversationId)
-    .single();
+    .maybeSingle();
 
+  console.log('[Finalize Call] Call lookup result:', callData, 'Error:', callError);
+
+  // If call doesn't exist, create it now (in case conversation.updated wasn't received)
   if (callError || !callData) {
-    console.error('[Intake Processor] Call not found:', callError);
-    return;
+    console.warn('[Finalize Call] Call not found, creating it now');
+    if (firmId) {
+      const { data: newCall, error: createError } = await supabase
+        .from('calls')
+        // @ts-ignore
+        .insert({
+          vapi_conversation_id: conversationId,
+          firm_id: firmId,
+          from_number: phoneNumber || '',
+          to_number: '', // Vapi phone number - will be looked up from firm
+          status: 'summarizing',
+          urgency: 'normal',
+          started_at: new Date().toISOString(), // Approximate
+          route_reason: 'after_hours',
+        })
+        .select('*, firms(*)')
+        .single();
+      
+      if (createError) {
+        console.error('[Finalize Call] Error creating call:', createError);
+        return;
+      }
+      
+      // Use the newly created call
+      const call = newCall as any;
+      const intake = (call.intake_json as IntakeData) || {};
+      
+      // Continue with finalization
+      await finalizeCallRecord(supabase, call, intake, transcript, phoneNumber);
+    } else {
+      console.error('[Finalize Call] Cannot create call - no firmId provided');
+      return;
+    }
+  } else {
+    const call = callData as any;
+    const intake = (call.intake_json as IntakeData) || {};
+    await finalizeCallRecord(supabase, call, intake, transcript, phoneNumber);
   }
+}
 
-  const call = callData as any;
-  const intake = (call.intake_json as IntakeData) || {};
+async function finalizeCallRecord(
+  supabase: ReturnType<typeof createServiceClient>,
+  call: any,
+  intake: IntakeData,
+  transcript?: string,
+  phoneNumber?: string
+) {
 
   // Update call with transcript and end time
-  await supabase
+  const { error: updateError } = await supabase
     .from('calls')
     // @ts-ignore
     .update({
       transcript_text: transcript || null,
-      from_number: phoneNumber || null,
+      from_number: phoneNumber || call.from_number || '',
       ended_at: new Date().toISOString(),
       status: 'summarizing',
     })
     .eq('id', call.id);
+  
+  if (updateError) {
+    console.error('[Finalize Call] Error updating call:', updateError);
+  }
 
   // Generate summary
   let summary: SummaryData;

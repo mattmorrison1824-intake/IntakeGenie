@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       phoneNumberId,
     } = body;
 
-    console.log('[Vapi Webhook] Event:', event, 'Conversation ID:', conversation_id, 'Phone Number:', phoneNumber, 'Phone Number ID:', phoneNumberId);
+    console.log('[Vapi Webhook] Event:', event, 'Conversation ID:', conversation_id, 'Phone Number:', phoneNumber, 'Phone Number ID:', phoneNumberId, 'Metadata:', metadata);
 
     const supabase = createServiceClient();
 
@@ -41,12 +41,14 @@ export async function POST(req: NextRequest) {
     if (!firmId) {
       if (phoneNumberId) {
         // Look up by phone number ID (stored in vapi_phone_number field)
-        const { data: firmData } = await supabase
+        const { data: firmData, error: lookupError } = await supabase
           .from('firms')
           .select('id, vapi_phone_number')
           .or(`vapi_phone_number.eq.${phoneNumberId},vapi_phone_number.ilike.%${phoneNumberId}%`)
           .limit(1)
           .maybeSingle();
+        
+        console.log('[Vapi Webhook] Firm lookup by phoneNumberId:', phoneNumberId, 'Result:', firmData, 'Error:', lookupError);
         
         if (firmData && (firmData as any).id) {
           firmId = (firmData as any).id;
@@ -67,11 +69,13 @@ export async function POST(req: NextRequest) {
       
       // Fallback: look up by phone number if we have it
       if (!firmId && phoneNumber) {
-        const { data: firmData } = await supabase
+        const { data: firmData, error: phoneLookupError } = await supabase
           .from('firms')
           .select('id')
           .eq('vapi_phone_number', phoneNumber)
-          .single();
+          .maybeSingle();
+        
+        console.log('[Vapi Webhook] Firm lookup by phoneNumber:', phoneNumber, 'Result:', firmData, 'Error:', phoneLookupError);
         
         if (firmData && (firmData as any).id) {
           firmId = (firmData as any).id;
@@ -97,8 +101,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    console.log('[Vapi Webhook] Resolved firmId:', firmId);
+
     if (event === 'conversation.updated') {
       // Update call with latest intake data
+      console.log('[Vapi Webhook] Processing conversation.updated event');
       await upsertCall({
         conversationId: conversation_id,
         firmId: firmId,
@@ -108,6 +115,7 @@ export async function POST(req: NextRequest) {
 
     if (event === 'conversation.completed') {
       // Finalize call: save transcript, generate summary, send email
+      console.log('[Vapi Webhook] Processing conversation.completed event');
       await finalizeCall({
         conversationId: conversation_id,
         transcript,

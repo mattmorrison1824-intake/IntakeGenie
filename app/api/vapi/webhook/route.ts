@@ -37,11 +37,13 @@ export async function POST(req: NextRequest) {
     const actualPhoneNumber = phoneNumber || phoneNumberAlt || body.phoneNumber?.number || body.phoneNumber;
     const actualPhoneNumberId = phoneNumberId || body.phoneNumber?.id || body.phoneNumberId;
 
+    console.log('[Vapi Webhook] ========== WEBHOOK RECEIVED ==========');
     console.log('[Vapi Webhook] Event:', event);
     console.log('[Vapi Webhook] Conversation ID:', conversation_id);
     console.log('[Vapi Webhook] Phone Number:', actualPhoneNumber);
     console.log('[Vapi Webhook] Phone Number ID:', actualPhoneNumberId);
     console.log('[Vapi Webhook] Metadata:', JSON.stringify(metadata, null, 2));
+    console.log('[Vapi Webhook] Full body keys:', Object.keys(body));
     console.log('[Vapi Webhook] Full body:', JSON.stringify(body, null, 2));
 
     const supabase = createServiceClient();
@@ -146,22 +148,36 @@ export async function POST(req: NextRequest) {
     if (event === 'conversation.updated') {
       // Update call with latest intake data
       console.log('[Vapi Webhook] Processing conversation.updated event');
-      await upsertCall({
-        conversationId: conversation_id,
-        firmId: firmId,
-        intake: structuredData,
-      });
+      console.log('[Vapi Webhook] Structured data:', JSON.stringify(structuredData, null, 2));
+      try {
+        await upsertCall({
+          conversationId: conversation_id,
+          firmId: firmId,
+          intake: structuredData,
+        });
+        console.log('[Vapi Webhook] Call upserted successfully');
+      } catch (upsertError: any) {
+        console.error('[Vapi Webhook] Error upserting call:', upsertError);
+        console.error('[Vapi Webhook] Upsert error stack:', upsertError?.stack);
+      }
     }
 
     if (event === 'conversation.completed') {
       // Finalize call: save transcript, generate summary, send email
       console.log('[Vapi Webhook] Processing conversation.completed event');
-      await finalizeCall({
-        conversationId: conversation_id,
-        transcript: transcript || body.transcript,
-        phoneNumber: actualPhoneNumber,
-        firmId: firmId,
-      });
+      console.log('[Vapi Webhook] Transcript length:', transcript?.length || body.transcript?.length || 0);
+      try {
+        await finalizeCall({
+          conversationId: conversation_id,
+          transcript: transcript || body.transcript,
+          phoneNumber: actualPhoneNumber,
+          firmId: firmId,
+        });
+        console.log('[Vapi Webhook] Call finalized successfully');
+      } catch (finalizeError: any) {
+        console.error('[Vapi Webhook] Error finalizing call:', finalizeError);
+        console.error('[Vapi Webhook] Finalize error stack:', finalizeError?.stack);
+      }
     }
 
     // Check if agent said goodbye and end call if needed

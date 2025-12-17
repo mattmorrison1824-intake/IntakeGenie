@@ -65,22 +65,28 @@ export async function POST(req: NextRequest) {
     );
 
     // Update assistant with new configuration
+    // Vapi PATCH requires specific field structure - update model.messages for system prompt changes
     try {
+      // Build the update payload - update model messages to reflect new system prompt
       const assistantPayload: any = {
-        name: `${firm.firm_name} Intake Assistant`,
         model: agentConfig.model,
-        voice: agentConfig.voice,
-        transcriber: agentConfig.transcriber,
         firstMessage: agentConfig.firstMessage,
-        server: {
-          url: webhookUrl,
-        },
       };
       
       // Add stopSpeakingPlan to prevent interruptions
       if ((agentConfig as any).stopSpeakingPlan) {
         assistantPayload.stopSpeakingPlan = (agentConfig as any).stopSpeakingPlan;
       }
+      
+      // Ensure metadata includes firmId for webhook resolution
+      assistantPayload.metadata = {
+        firmId: firmId,
+      };
+      
+      // Ensure server webhook URL is set
+      assistantPayload.server = {
+        url: webhookUrl,
+      };
       
       console.log('[Update Assistant] Updating assistant:', firm.vapi_assistant_id);
       console.log('[Update Assistant] Payload:', JSON.stringify(assistantPayload, null, 2));
@@ -99,12 +105,17 @@ export async function POST(req: NextRequest) {
       console.error('[Update Assistant] Error updating assistant:', errorDetails);
       console.error('[Update Assistant] Full error:', vapiError);
       
+      // Return more detailed error information
+      const errorMessage = typeof errorDetails === 'object' && errorDetails?.message 
+        ? (Array.isArray(errorDetails.message) ? errorDetails.message.join(', ') : errorDetails.message)
+        : (typeof errorDetails === 'string' ? errorDetails : 'Unknown error');
+      
       return NextResponse.json({ 
         error: 'Failed to update assistant',
         details: errorDetails,
-        status: vapiError?.response?.status,
-        message: vapiError?.response?.data?.message || vapiError?.message
-      }, { status: 500 });
+        status: vapiError?.response?.status || 500,
+        message: errorMessage
+      }, { status: vapiError?.response?.status || 500 });
     }
   } catch (error: any) {
     console.error('[Update Assistant] Unexpected error:', error);

@@ -264,8 +264,8 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                 </div>
               )}
 
-              {/* Provision new number */}
-              {!firm.inbound_number_e164 && !firm.vapi_phone_number_id && (
+              {/* Provision new number - only show if no number exists */}
+              {!firm.inbound_number_e164 && !firm.vapi_phone_number_id && !firm.twilio_phone_number_sid && (
                 <div className="space-y-4">
                   <div>
                     <label 
@@ -327,6 +327,16 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                           } else if (data.details) {
                             errorMsg = typeof data.details === 'string' ? data.details : JSON.stringify(data.details);
                           }
+                          
+                          // If number already exists, show a clear message
+                          if (response.status === 409 || errorMsg.includes('already provisioned')) {
+                            errorMsg = 'A phone number has already been provisioned for this firm. Only one number is allowed per firm.';
+                            // Refresh the form to show the existing number
+                            setTimeout(() => {
+                              onSave();
+                            }, 1000);
+                          }
+                          
                           throw new Error(errorMsg);
                         }
 

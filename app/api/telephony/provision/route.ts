@@ -45,13 +45,15 @@ export async function POST(req: NextRequest) {
 
     const firm = firmData as any;
 
-    // Check if phone number already exists
-    if (firm.inbound_number_e164 || firm.vapi_phone_number_id) {
+    // Check if phone number already exists - prevent duplicate provisioning
+    if (firm.inbound_number_e164 || firm.vapi_phone_number_id || firm.twilio_phone_number_sid) {
       return NextResponse.json({
+        error: 'Phone number already provisioned',
+        message: 'This firm already has a phone number. Only one number can be provisioned per firm.',
         phoneNumber: firm.inbound_number_e164,
         vapiPhoneNumberId: firm.vapi_phone_number_id,
-        message: 'Phone number already provisioned'
-      });
+        twilioPhoneNumberSid: firm.twilio_phone_number_sid,
+      }, { status: 409 }); // 409 Conflict - resource already exists
     }
 
     // Validate Twilio credentials

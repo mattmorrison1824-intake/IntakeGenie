@@ -55,16 +55,12 @@ export async function sendIntakeEmail(
     </ul>
   `;
 
-  const transcriptSection = transcript ? `
-    <details>
-      <summary><strong>Full Transcript</strong> (Click to expand)</summary>
-      <pre style="white-space: pre-wrap; background: #f5f5f5; padding: 1em; border-radius: 4px;">${transcript}</pre>
-    </details>
-  ` : '<p><em>Transcript not available</em></p>';
-
-  const recordingSection = recordingUrl ? `
-    <p><strong>Recording:</strong> <a href="${recordingUrl}">Listen to Call Recording</a></p>
-  ` : '<p><em>Recording not available</em></p>';
+  // Transcript and recording are available in the platform, not in email
+  const platformNote = `
+    <p style="margin-top: 2em; padding: 1em; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+      <strong>Note:</strong> Full transcript and call recording are available in the IntakeGenie platform. Please log in to view the complete details.
+    </p>
+  `;
 
   const html = `
     <!DOCTYPE html>
@@ -76,8 +72,6 @@ export async function sendIntakeEmail(
           h2 { color: #2563eb; }
           h3 { color: #1e40af; margin-top: 1.5em; }
           ul { margin: 0.5em 0; }
-          details { margin: 1em 0; }
-          pre { font-size: 0.9em; }
         </style>
       </head>
       <body>
@@ -88,8 +82,7 @@ export async function sendIntakeEmail(
         ${actionItems}
         <h3>Follow-up Recommendation</h3>
         <p>${summary.follow_up_recommendation}</p>
-        ${transcriptSection}
-        ${recordingSection}
+        ${platformNote}
       </body>
     </html>
   `;

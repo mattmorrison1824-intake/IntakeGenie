@@ -137,7 +137,7 @@ export default async function DashboardPage() {
                     </h2>
                   </div>
                   <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
-                    {firm.twilio_number.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')}
+                    {firm.twilio_number.replace(/^\+?(\d{1})(\d{3})(\d{3})(\d{4})$/, '+$1 ($2) $3-$4')}
                   </div>
                 </div>
               )}

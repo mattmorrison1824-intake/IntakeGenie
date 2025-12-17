@@ -217,72 +217,59 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                 return (
                   <tr
                     key={call.id}
-                    className="border-b border-gray-100 transition-colors hover:bg-gray-50"
+                    className="border-b border-gray-100 transition-colors hover:bg-gray-50 cursor-pointer"
+                    onClick={() => router.push(`/calls/${call.id}`)}
                   >
                     <td className="px-4 py-3 text-sm" style={{ color: '#0B1F3B' }}>
-                      <Link href={`/calls/${call.id}`} className="block hover:underline">
-                        {formatDate(call.started_at)}
-                      </Link>
+                      {formatDate(call.started_at)}
                     </td>
                     <td className="px-4 py-3 text-sm" style={{ color: '#0B1F3B' }}>
-                      <Link href={`/calls/${call.id}`} className="block hover:underline">
-                        {call.from_number}
-                      </Link>
+                      {call.from_number}
                     </td>
                     <td className="px-4 py-3 text-sm capitalize" style={{ color: '#4A5D73' }}>
-                      <Link href={`/calls/${call.id}`} className="block">
-                        {getCategory(call)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/calls/${call.id}`} className="block">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
-                            {urgencyValue}/5
-                          </span>
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden" style={{ maxWidth: '80px' }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${(urgencyValue / 5) * 100}%`,
-                                backgroundColor: urgencyColor,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-sm" style={{ color: '#4A5D73' }}>
-                      <Link href={`/calls/${call.id}`} className="block">
-                        {formatDuration(call.started_at, call.ended_at)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/calls/${call.id}`} className="block">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                            call.status === 'emailed' 
-                              ? 'bg-green-50 text-green-700' 
-                              : 'bg-gray-50 text-gray-700'
-                          }`}
-                        >
-                          {call.status === 'emailed' ? 'Resolved' : call.status}
-                        </span>
-                      </Link>
+                      {getCategory(call)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
+                          {urgencyValue}/5
+                        </span>
+                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden" style={{ maxWidth: '80px' }}>
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${(urgencyValue / 5) * 100}%`,
+                              backgroundColor: urgencyColor,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm" style={{ color: '#4A5D73' }}>
+                      {formatDuration(call.started_at, call.ended_at)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                          call.status === 'emailed' 
+                            ? 'bg-green-50 text-green-700' 
+                            : 'bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        {call.status === 'emailed' ? 'Resolved' : call.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <Link
                           href={`/calls/${call.id}`}
                           className="p-1 hover:bg-gray-100 rounded"
                           style={{ color: '#4A5D73' }}
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <button
                           onClick={(e) => {
-                            e.stopPropagation();
                             // Share functionality can be added here
                           }}
                           className="p-1 hover:bg-gray-100 rounded"
@@ -292,6 +279,7 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                         </button>
                         <button
                           onClick={async (e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             if (confirm('Are you sure you want to delete this call?')) {
                               try {
@@ -301,6 +289,8 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                                 if (response.ok) {
                                   router.refresh();
                                 } else {
+                                  const errorText = await response.text();
+                                  console.error('Delete failed:', errorText);
                                   alert('Failed to delete call');
                                 }
                               } catch (error) {

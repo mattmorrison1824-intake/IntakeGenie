@@ -43,6 +43,10 @@ export async function upsertCall({
     
     if (updateError) {
       console.error('[Upsert Call] Error updating call:', updateError);
+      return { success: false, error: updateError };
+    } else {
+      console.log('[Upsert Call] Call updated successfully');
+      return { success: true, callId: (existingCall as any).id };
     }
   } else if (firmId) {
     // Create new call record
@@ -93,9 +97,6 @@ export async function upsertCall({
     console.warn('[Upsert Call] This means the webhook could not find the firm. Check server logs for firm lookup errors.');
     return { success: false, error: 'No firmId provided' };
   }
-  
-  // Update case
-  return { success: true };
 }
 
 /**

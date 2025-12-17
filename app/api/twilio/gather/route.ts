@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Auto-skip state if field is already filled
-    let currentState = state.state;
+    let currentState: ConversationState = state.state;
     let skippedStates: string[] = [];
     while (stateFieldMap[currentState] && state.filled[stateFieldMap[currentState]] && nextStateMap[currentState]) {
       const field = stateFieldMap[currentState];
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       // Check if field has a valid value (not empty, not null, not undefined)
       if (fieldValue && fieldValue !== '' && fieldValue !== 'unknown') {
         skippedStates.push(currentState);
-        currentState = nextStateMap[currentState];
+        currentState = nextStateMap[currentState] as ConversationState;
         console.log(`[Gather] Auto-skipping state ${skippedStates[skippedStates.length - 1]} -> ${currentState} (field ${field} already filled: ${fieldValue})`);
       } else {
         break;

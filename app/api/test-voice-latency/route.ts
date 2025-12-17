@@ -135,7 +135,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Performance assessment
-    const totalLatency = results.timings.total_latency || results.timings.openai_agent_turn || 0;
+    const totalLatency = (typeof results.timings.total_latency === 'number' ? results.timings.total_latency : 0) ||
+                         (typeof results.timings.openai_agent_turn === 'number' ? results.timings.openai_agent_turn : 0) || 0;
     let performanceRating = 'Excellent';
     if (totalLatency > 3000) {
       performanceRating = 'Slow';
@@ -168,17 +169,21 @@ export async function GET(request: NextRequest) {
 
 function generateRecommendations(results: any): string[] {
   const recommendations: string[] = [];
-  const totalLatency = results.timings.total_latency || results.timings.openai_agent_turn || 0;
+  const totalLatency = (typeof results.timings.total_latency === 'number' ? results.timings.total_latency : 0) ||
+                       (typeof results.timings.openai_agent_turn === 'number' ? results.timings.openai_agent_turn : 0) || 0;
 
   if (totalLatency > 3000) {
     recommendations.push('Total latency is high (>3s). Consider optimizing OpenAI model or reducing response length.');
   }
 
-  if (results.timings.openai_agent_turn > 2000) {
+  const openaiLatency = typeof results.timings.openai_agent_turn === 'number' ? results.timings.openai_agent_turn : 0;
+  if (openaiLatency > 2000) {
     recommendations.push('OpenAI response time is slow (>2s). Consider using a faster model or optimizing prompts.');
   }
 
-  if (results.timings.tts_generation > 1000 && results.timings.uses_premium_tts) {
+  const ttsLatency = typeof results.timings.tts_generation === 'number' ? results.timings.tts_generation : 0;
+  const usesPremium = results.timings.uses_premium_tts === true;
+  if (ttsLatency > 1000 && usesPremium) {
     recommendations.push('TTS generation is slow (>1s). Consider pre-generating common phrases or using Twilio TTS fallback for faster responses.');
   }
 
@@ -186,7 +191,8 @@ function generateRecommendations(results: any): string[] {
     recommendations.push('Premium TTS is not being used. Check DEEPGRAM_API_KEY configuration.');
   }
 
-  if (results.timings.tts_cache_hit && results.timings.tts_cache_hit > 100) {
+  const cacheHitLatency = typeof results.timings.tts_cache_hit === 'number' ? results.timings.tts_cache_hit : 0;
+  if (cacheHitLatency > 100) {
     recommendations.push('TTS cache hit is slow (>100ms). Consider optimizing cache lookup.');
   }
 

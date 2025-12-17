@@ -648,7 +648,9 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                           const data = await response.json();
                           
                           if (!response.ok) {
-                            throw new Error(data.error || data.details || 'Failed to link number');
+                            const errorMsg = data.error || data.details || data.message || 'Failed to link number';
+                            console.error('Link number error response:', data);
+                            throw new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
                           }
 
                           setSuccess(true);

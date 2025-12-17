@@ -88,8 +88,11 @@ export async function POST(req: NextRequest) {
     // Step 2: Get the phone number details to verify it exists and get the actual number
     let phoneNumber: string | null = null;
     try {
+      console.log('[Link Number] Fetching phone number details for ID:', phoneNumberId);
       const getResponse = await vapi.get(`/phone-number/${phoneNumberId}`);
       const data = getResponse.data;
+      
+      console.log('[Link Number] Phone number details:', JSON.stringify(data, null, 2));
       
       // Extract phone number
       phoneNumber = 
@@ -97,7 +100,6 @@ export async function POST(req: NextRequest) {
         (data.fallbackDestination?.number && typeof data.fallbackDestination.number === 'string' && data.fallbackDestination.number.match(/^\+?[1-9]\d{1,14}$/)) ? data.fallbackDestination.number :
         null;
       
-      console.log('[Link Number] Phone number details:', JSON.stringify(data, null, 2));
       console.log('[Link Number] Extracted number:', phoneNumber);
       
       // Update phone number to assign assistant and server
@@ -111,15 +113,23 @@ export async function POST(req: NextRequest) {
         };
       }
       
+      console.log('[Link Number] Updating phone number with payload:', JSON.stringify(updatePayload, null, 2));
       await vapi.patch(`/phone-number/${phoneNumberId}`, updatePayload);
       console.log('[Link Number] Phone number updated with assistant and server');
       
     } catch (vapiError: any) {
       const errorDetails = vapiError?.response?.data || vapiError?.message || vapiError;
+      const statusCode = vapiError?.response?.status || 500;
       console.error('[Link Number] Error linking phone number:', errorDetails);
+      console.error('[Link Number] Error status:', statusCode);
+      console.error('[Link Number] Full error:', JSON.stringify(errorDetails, null, 2));
+      
+      // Return more detailed error information
       return NextResponse.json({ 
         error: 'Failed to link phone number',
-        details: errorDetails
+        details: errorDetails,
+        message: typeof errorDetails === 'object' && errorDetails?.message ? errorDetails.message : 'Unknown error',
+        statusCode: statusCode
       }, { status: 500 });
     }
 

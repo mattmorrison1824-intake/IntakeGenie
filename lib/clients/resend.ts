@@ -94,35 +94,69 @@ export async function sendIntakeEmail(
     </html>
   `;
 
+  // Check API key
+  if (!apiKey) {
+    const error = new Error('RESEND_API_KEY not configured');
+    console.error('[Resend] Configuration error:', error.message);
+    throw error;
+  }
+
   const maxRetries = 3;
   let lastError: any = null;
 
+  // Use environment variable for from address, fallback to default
+  const fromAddress = process.env.RESEND_FROM_ADDRESS || 'IntakeGenie <onboarding@resend.dev>';
+
+  console.log('[Resend] Attempting to send intake email:', {
+    to,
+    from: fromAddress,
+    subject,
+    urgency,
+  });
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      console.log(`[Resend] Email attempt ${attempt}/${maxRetries}...`);
+      
       const { data, error } = await resend.emails.send({
-        from: 'IntakeGenie <noreply@intakegenie.com>', // Update with your verified domain
+        from: fromAddress,
         to,
         subject,
         html,
       });
 
       if (error) {
+        console.error(`[Resend] Resend API returned error on attempt ${attempt}:`, error);
         throw error;
       }
+
+      console.log('[Resend] Email sent successfully:', {
+        id: data?.id,
+        to,
+        subject,
+      });
 
       return data;
     } catch (error) {
       lastError = error;
-      console.error(`[Resend] Email attempt ${attempt}/${maxRetries} failed:`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[Resend] Email attempt ${attempt}/${maxRetries} failed:`, {
+        error: errorMessage,
+        attempt,
+        to,
+      });
+      
       if (attempt < maxRetries) {
         // Wait before retry (exponential backoff: 1s, 2s, 4s)
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[Resend] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
 
   // All retries failed
-  console.error('[Resend] All email attempts failed');
-  throw lastError;
+  console.error('[Resend] All email attempts failed after', maxRetries, 'retries');
+  throw lastError || new Error('Email sending failed after retries');
 }
 

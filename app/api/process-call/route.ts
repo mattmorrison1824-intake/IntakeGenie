@@ -49,17 +49,28 @@ async function sendBasicFallbackEmail(
     </html>
   `;
 
+  // Use environment variable for from address, fallback to Resend default
+  const fromAddress = process.env.RESEND_FROM_ADDRESS || 'IntakeGenie <onboarding@resend.dev>';
+
+  console.log('[Process Call] Sending fallback email:', {
+    to,
+    from: fromAddress,
+    subject,
+  });
+
   const { data, error } = await resend.emails.send({
-    from: 'IntakeGenie <noreply@intakegenie.com>',
+    from: fromAddress,
     to,
     subject,
     html,
   });
 
   if (error) {
+    console.error('[Process Call] Fallback email error:', error);
     throw error;
   }
 
+  console.log('[Process Call] Fallback email sent successfully:', data?.id);
   return data;
 }
 

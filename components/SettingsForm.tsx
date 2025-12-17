@@ -476,10 +476,33 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                 </p>
                 {(firm.vapi_phone_number || firm.twilio_number) && (
                   <div className="mt-2">
-                    <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
-                      Current number: {firm.vapi_phone_number || firm.twilio_number}
-                    </p>
-                    {firm.vapi_phone_number && (firm.vapi_phone_number.includes('ID:') || firm.vapi_phone_number.includes('Dashboard')) && (
+                    {firm.vapi_phone_number && firm.vapi_phone_number.match(/^\+?[1-9]\d{1,14}$/) ? (
+                      <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
+                        Current number: {firm.vapi_phone_number}
+                      </p>
+                    ) : firm.vapi_phone_number ? (
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
+                          Phone number is being assigned...
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                          Vapi free phone numbers are assigned asynchronously. The number will appear here automatically after the first call, or you can check the Vapi dashboard.
+                        </p>
+                        <a
+                          href="https://dashboard.vapi.ai/phone-numbers"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 text-xs text-blue-600 hover:underline block"
+                        >
+                          View in Vapi Dashboard →
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium" style={{ color: '#0B1F3B' }}>
+                        Current number: {firm.twilio_number}
+                      </p>
+                    )}
+                    {firm.vapi_phone_number && (firm.vapi_phone_number.includes('ID:') || firm.vapi_phone_number.includes('Dashboard') || firm.vapi_phone_number.includes('Pending')) && (
                       <div className="mt-2">
                         <button
                           type="button"

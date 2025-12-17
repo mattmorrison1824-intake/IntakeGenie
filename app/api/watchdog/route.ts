@@ -61,21 +61,39 @@ export async function GET(request: NextRequest) {
           if (notifyEmails.length > 0) {
             // Send basic fallback email
             const { resend } = await import('@/lib/clients/resend');
-            await resend.emails.send({
-              from: 'IntakeGenie <noreply@intakegenie.com>',
+            const fromAddress = process.env.RESEND_FROM_ADDRESS || 'IntakeGenie <onboarding@resend.dev>';
+            
+            console.log('[Watchdog] Sending fallback email for stuck call:', {
               to: notifyEmails,
-              subject: `[STUCK CALL] Intake Call - ${intake.full_name || 'Unknown'}`,
-              html: `
-                <h2>Intake Call - Processing Stuck</h2>
-                <p><em>This call was stuck in processing. Below is available data.</em></p>
-                <h3>Caller Details</h3>
-                <ul>
-                  <li><strong>Name:</strong> ${intake.full_name || 'Not provided'}</li>
-                  <li><strong>Phone:</strong> ${intake.callback_number || 'Not provided'}</li>
-                </ul>
-                ${(call as any).transcript_text ? `<h3>Transcript</h3><pre>${(call as any).transcript_text}</pre>` : ''}
-              `,
+              from: fromAddress,
+              callSid: (call as any).twilio_call_sid,
             });
+            
+            try {
+              const { data, error } = await resend.emails.send({
+                from: fromAddress,
+                to: notifyEmails,
+                subject: `[STUCK CALL] Intake Call - ${intake.full_name || 'Unknown'}`,
+                html: `
+                  <h2>Intake Call - Processing Stuck</h2>
+                  <p><em>This call was stuck in processing. Below is available data.</em></p>
+                  <h3>Caller Details</h3>
+                  <ul>
+                    <li><strong>Name:</strong> ${intake.full_name || 'Not provided'}</li>
+                    <li><strong>Phone:</strong> ${intake.callback_number || 'Not provided'}</li>
+                  </ul>
+                  ${(call as any).transcript_text ? `<h3>Transcript</h3><pre>${(call as any).transcript_text}</pre>` : ''}
+                `,
+              });
+              
+              if (error) {
+                console.error('[Watchdog] Failed to send fallback email:', error);
+              } else {
+                console.log('[Watchdog] Fallback email sent successfully:', data?.id);
+              }
+            } catch (emailError) {
+              console.error('[Watchdog] Error sending fallback email:', emailError);
+            }
           }
 
           await supabase

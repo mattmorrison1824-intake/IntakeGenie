@@ -35,6 +35,47 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('firm_id', firm?.id || '');
 
+  // Get leads count (calls where customer provided their phone number)
+  // A lead is defined as a call with a callback_number in intake_json that is not null/empty
+  // Using PostgREST JSONB operator: intake_json->>'callback_number' extracts text value
+  let leadsCount = 0;
+  try {
+    const { count, error } = await supabase
+      .from('calls')
+      .select('*', { count: 'exact', head: true })
+      .eq('firm_id', firm?.id || '')
+      .not('intake_json->>callback_number', 'is', null)
+      .neq('intake_json->>callback_number', '');
+    
+    if (error) {
+      console.error('[Dashboard] Error counting leads, using fallback:', error);
+      // Fallback: fetch calls and filter in memory
+      const { data: allCalls } = await supabase
+        .from('calls')
+        .select('intake_json')
+        .eq('firm_id', firm?.id || '');
+      
+      leadsCount = (allCalls || []).filter((call: any) => {
+        const intake = call.intake_json as any;
+        return intake?.callback_number && intake.callback_number.trim().length > 0;
+      }).length;
+    } else {
+      leadsCount = count || 0;
+    }
+  } catch (err) {
+    console.error('[Dashboard] Exception counting leads:', err);
+    // Fallback: fetch calls and filter in memory
+    const { data: allCalls } = await supabase
+      .from('calls')
+      .select('intake_json')
+      .eq('firm_id', firm?.id || '');
+    
+    leadsCount = (allCalls || []).filter((call: any) => {
+      const intake = call.intake_json as any;
+      return intake?.callback_number && intake.callback_number.trim().length > 0;
+    }).length;
+  }
+
   // Get recent calls
   const { data: recentCallsData } = await supabase
     .from('calls')
@@ -94,6 +135,22 @@ export default async function DashboardPage() {
                       </div>
                   <div className="text-3xl font-bold" style={{ color: '#0B1F3B' }}>
                     {callsCount || 0}
+                  </div>
+                </div>
+                <div 
+                  className="bg-white rounded-xl shadow-sm p-6"
+                  style={{
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                  }}
+                >
+                  <div className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A5D73' }}>
+                    Leads Generated
+                      </div>
+                  <div className="text-3xl font-bold" style={{ color: '#0B1F3B' }}>
+                    {leadsCount || 0}
+                  </div>
+                  <div className="text-xs mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
+                    Calls with phone numbers
                   </div>
                 </div>
                 <div 

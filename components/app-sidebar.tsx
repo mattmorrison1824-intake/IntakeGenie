@@ -54,7 +54,7 @@ export function AppSidebar() {
           <img
             src="/full-logo.png"
             alt="IntakeGenie"
-            className="h-12 w-auto"
+            className="h-20 w-auto"
           />
         </Link>
       </SidebarHeader>

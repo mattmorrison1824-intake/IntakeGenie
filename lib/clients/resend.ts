@@ -56,10 +56,17 @@ export async function sendIntakeEmail(
   `;
 
   // Transcript and recording are available in the platform, not in email
+  const recordingLink = recordingUrl 
+    ? `<p style="margin-top: 1em;">
+        <strong>Call Recording:</strong> <a href="${recordingUrl}" target="_blank" style="color: #2563eb; text-decoration: underline;">Listen to Recording</a>
+      </p>`
+    : '';
+  
   const platformNote = `
-    <p style="margin-top: 2em; padding: 1em; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+    <div style="margin-top: 2em; padding: 1em; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
       <strong>Note:</strong> Full transcript and call recording are available in the IntakeGenie platform. Please log in to view the complete details.
-    </p>
+      ${recordingLink}
+    </div>
   `;
 
   const html = `

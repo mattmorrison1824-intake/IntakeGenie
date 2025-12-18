@@ -43,9 +43,10 @@ async function sendBasicFallbackEmail(
           <li><strong>Email:</strong> ${intake.email || 'Not provided'}</li>
         </ul>
         ${intake.reason_for_call ? `<h3>Reason for Call</h3><p>${intake.reason_for_call}</p>` : ''}
-        <p style="margin-top: 2em; padding: 1em; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+        <div style="margin-top: 2em; padding: 1em; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
           <strong>Note:</strong> Full transcript and call recording are available in the IntakeGenie platform. Please log in to view the complete details.
-        </p>
+          ${recordingUrl ? `<p style="margin-top: 1em;"><strong>Call Recording:</strong> <a href="${recordingUrl}" target="_blank" style="color: #2563eb; text-decoration: underline;">Listen to Recording</a></p>` : ''}
+        </div>
       </body>
     </html>
   `;

@@ -82,17 +82,29 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
   };
 
   const getCategory = (call: Call): string => {
+    // Use stored call_category if available (extracted from summary title)
+    if ((call as any).call_category) {
+      return (call as any).call_category;
+    }
+    // Fallback: try to extract from summary title
+    const summary = call.summary_json as any;
+    if (summary?.title) {
+      const match = summary.title.match(/^([^-]+?)(?:\s*-\s*|$)/);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    // Final fallback: use intake reason or route reason
     const intake = call.intake_json as any;
-    if (call.route_reason === 'after_hours') return 'After Hours';
-    if (call.route_reason === 'no_answer') return 'No Answer';
     if (intake?.reason_for_call) {
       const reason = intake.reason_for_call.toLowerCase();
-      if (reason.includes('support') || reason.includes('help')) return 'Support';
-      if (reason.includes('inquiry') || reason.includes('question')) return 'Inquiry';
-      if (reason.includes('personal')) return 'Personal';
+      if (reason.includes('work') || reason.includes('injury')) return 'Work Injury';
+      if (reason.includes('accident') || reason.includes('car')) return 'Accident';
+      if (reason.includes('question') || reason.includes('inquiry')) return 'General Questioning';
     }
-    if (call.status === 'error') return 'Error';
-    return 'Other';
+    if (call.route_reason === 'after_hours') return 'After Hours';
+    if (call.route_reason === 'no_answer') return 'No Answer';
+    return 'Intake Call';
   };
 
   const handleCallSelect = (callId: string) => {

@@ -244,12 +244,22 @@ export async function POST(request: NextRequest) {
     const intake = (call.intake_json as IntakeData) || {};
     let summary: SummaryData;
 
+    // Helper function to extract category from summary title
+    const extractCategoryFromTitle = (title: string): string => {
+      const match = title.match(/^([^-]+?)(?:\s*-\s*|$)/);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+      return title.length > 50 ? title.substring(0, 50).trim() : title.trim();
+    };
+
     try {
       summary = await generateSummary(transcript || 'No transcript available.', intake);
+      const category = extractCategoryFromTitle(summary.title);
       await supabase
         .from('calls')
         // @ts-ignore - Supabase type inference issue
-        .update({ summary_json: summary as any, status: 'summarizing' })
+        .update({ summary_json: summary as any, call_category: category, status: 'summarizing' })
         // @ts-ignore - Supabase type inference issue
         .eq('id', call.id);
     } catch (error) {
@@ -274,10 +284,11 @@ export async function POST(request: NextRequest) {
         urgency_level: (call.urgency as UrgencyLevel) || 'normal',
         follow_up_recommendation: 'Standard follow-up recommended - summary generation had issues',
       };
+      const category = extractCategoryFromTitle(summary.title);
         await supabase
           .from('calls')
           // @ts-ignore - Supabase type inference issue
-        .update({ summary_json: summary as any, status: 'summarizing' })
+        .update({ summary_json: summary as any, call_category: category, status: 'summarizing' })
           // @ts-ignore - Supabase type inference issue
           .eq('id', call.id);
     }

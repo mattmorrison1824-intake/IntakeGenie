@@ -53,6 +53,7 @@ export interface Call {
   transcript_text: string | null;
   intake_json: IntakeData | null;
   summary_json: SummaryData | null;
+  call_category: string | null; // Type of call (e.g., "Work Injury Intake", "Car Accident Intake", "General Questioning")
   error_message: string | null;
 }
 

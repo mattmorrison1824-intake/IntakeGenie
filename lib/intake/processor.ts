@@ -4,6 +4,22 @@ import { sendIntakeEmail } from '@/lib/clients/resend';
 import { IntakeData, SummaryData, UrgencyLevel } from '@/types';
 
 /**
+ * Extract call category from summary title
+ * Examples: "Work Injury Intake - John Doe" -> "Work Injury Intake"
+ *           "Car Accident Intake - Jane Smith" -> "Car Accident Intake"
+ *           "General Questioning - Bob" -> "General Questioning"
+ */
+function extractCategoryFromTitle(title: string): string {
+  // Extract the part before the dash (if present)
+  const match = title.match(/^([^-]+?)(?:\s*-\s*|$)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  // If no dash, return the title as-is (truncated if too long)
+  return title.length > 50 ? title.substring(0, 50).trim() : title.trim();
+}
+
+/**
  * Upsert call record with intake data (called during conversation)
  */
 export async function upsertCall({

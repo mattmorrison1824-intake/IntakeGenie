@@ -44,60 +44,66 @@ export default async function DashboardPage() {
 
   const firm = firmData || null;
 
-  // Get recent calls count
-  const { count: callsCount } = await supabase
-    .from('calls')
-    .select('*', { count: 'exact', head: true })
-    .eq('firm_id', firm?.id || '');
+  // Get recent calls count (only if firm exists)
+  const { count: callsCount } = firm
+    ? await supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('firm_id', (firm as any).id)
+    : { count: 0 };
 
   // Get leads count (calls where customer provided their name)
   // A lead is defined as a call with a full_name in intake_json that is not null/empty
   // Using PostgREST JSONB operator: intake_json->>'full_name' extracts text value
   let leadsCount = 0;
-  try {
-    const { count, error } = await supabase
-      .from('calls')
-      .select('*', { count: 'exact', head: true })
-      .eq('firm_id', firm?.id || '')
-      .not('intake_json->>full_name', 'is', null)
-      .neq('intake_json->>full_name', '');
-    
-    if (error) {
-      console.error('[Dashboard] Error counting leads, using fallback:', error);
+  if (firm) {
+    try {
+      const { count, error } = await supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('firm_id', (firm as any).id)
+        .not('intake_json->>full_name', 'is', null)
+        .neq('intake_json->>full_name', '');
+      
+      if (error) {
+        console.error('[Dashboard] Error counting leads, using fallback:', error);
+        // Fallback: fetch calls and filter in memory
+        const { data: allCalls } = await supabase
+          .from('calls')
+          .select('intake_json')
+          .eq('firm_id', (firm as any).id);
+        
+        leadsCount = (allCalls || []).filter((call: any) => {
+          const intake = call.intake_json as any;
+          return intake?.full_name && intake.full_name.trim().length > 0;
+        }).length;
+      } else {
+        leadsCount = count || 0;
+      }
+    } catch (err) {
+      console.error('[Dashboard] Exception counting leads:', err);
       // Fallback: fetch calls and filter in memory
       const { data: allCalls } = await supabase
         .from('calls')
         .select('intake_json')
-        .eq('firm_id', firm?.id || '');
+        .eq('firm_id', (firm as any).id);
       
       leadsCount = (allCalls || []).filter((call: any) => {
         const intake = call.intake_json as any;
         return intake?.full_name && intake.full_name.trim().length > 0;
       }).length;
-    } else {
-      leadsCount = count || 0;
     }
-  } catch (err) {
-    console.error('[Dashboard] Exception counting leads:', err);
-    // Fallback: fetch calls and filter in memory
-    const { data: allCalls } = await supabase
-      .from('calls')
-      .select('intake_json')
-      .eq('firm_id', firm?.id || '');
-    
-    leadsCount = (allCalls || []).filter((call: any) => {
-      const intake = call.intake_json as any;
-      return intake?.full_name && intake.full_name.trim().length > 0;
-    }).length;
   }
 
-  // Get recent calls
-  const { data: recentCallsData } = await supabase
-    .from('calls')
-    .select('*')
-    .eq('firm_id', firm?.id || '')
-    .order('started_at', { ascending: false })
-    .limit(5);
+  // Get recent calls (only if firm exists)
+  const { data: recentCallsData } = firm
+    ? await supabase
+        .from('calls')
+        .select('*')
+        .eq('firm_id', (firm as any).id)
+        .order('started_at', { ascending: false })
+        .limit(5)
+    : { data: null };
 
   const recentCalls = (recentCallsData || []) as any[];
 
@@ -175,7 +181,7 @@ export default async function DashboardPage() {
                     Firm Name
                       </div>
                   <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
-                    {firm.firm_name}
+                    {(firm as any).firm_name}
                   </div>
                 </div>
                       </div>
@@ -196,7 +202,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 
-                {firm.subscription_status && firm.subscription_status !== 'inactive' ? (
+                {(firm as any).subscription_status && (firm as any).subscription_status !== 'inactive' ? (
                   <div className="space-y-4">
                     <div className="grid gap-6 md:grid-cols-2 border-b border-gray-200 pb-6">
                       <div>
@@ -204,7 +210,7 @@ export default async function DashboardPage() {
                           Current Plan
                         </div>
                         <div className="text-lg font-bold capitalize" style={{ color: '#0B1F3B' }}>
-                          {firm.subscription_plan || 'Unknown'}
+                          {(firm as any).subscription_plan || 'Unknown'}
                         </div>
                       </div>
                       <div>
@@ -214,24 +220,24 @@ export default async function DashboardPage() {
                         <div>
                           <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                              firm.subscription_status === 'active' || firm.subscription_status === 'trialing'
+                              (firm as any).subscription_status === 'active' || (firm as any).subscription_status === 'trialing'
                                 ? 'bg-green-50 text-green-700 border border-green-200'
-                                : firm.subscription_status === 'canceled' || firm.subscription_status === 'past_due' || firm.subscription_status === 'unpaid'
+                                : (firm as any).subscription_status === 'canceled' || (firm as any).subscription_status === 'past_due' || (firm as any).subscription_status === 'unpaid'
                                 ? 'bg-red-50 text-red-700 border border-red-200'
                                 : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                             }`}
                           >
-                            {firm.subscription_status === 'trialing' ? 'Trial' : firm.subscription_status.replace('_', ' ')}
+                            {(firm as any).subscription_status === 'trialing' ? 'Trial' : (firm as any).subscription_status.replace('_', ' ')}
                           </span>
                         </div>
                       </div>
-                      {firm.subscription_current_period_end && (firm.subscription_status === 'active' || firm.subscription_status === 'trialing') && (
+                      {(firm as any).subscription_current_period_end && ((firm as any).subscription_status === 'active' || (firm as any).subscription_status === 'trialing') && (
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
-                            {firm.subscription_cancel_at_period_end ? 'Expires On' : 'Renews On'}
+                            {(firm as any).subscription_cancel_at_period_end ? 'Expires On' : 'Renews On'}
                           </div>
                           <div className="text-sm" style={{ color: '#0B1F3B' }}>
-                            {new Date(firm.subscription_current_period_end).toLocaleDateString('en-US', { 
+                            {new Date((firm as any).subscription_current_period_end).toLocaleDateString('en-US', { 
                               year: 'numeric', 
                               month: 'long', 
                               day: 'numeric' 
@@ -239,7 +245,7 @@ export default async function DashboardPage() {
                           </div>
                         </div>
                       )}
-                      {firm.subscription_cancel_at_period_end && (
+                      {(firm as any).subscription_cancel_at_period_end && (
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
                             Cancellation
@@ -305,13 +311,13 @@ export default async function DashboardPage() {
                     <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
                       Notification Emails
                     </div>
-                    <div className="text-sm" style={{ color: '#0B1F3B' }}>{firm.notify_emails?.join(', ') || 'None'}</div>
+                    <div className="text-sm" style={{ color: '#0B1F3B' }}>{(firm as any).notify_emails?.join(', ') || 'None'}</div>
                     </div>
                     <div>
                     <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
                       Timezone
                     </div>
-                    <div className="text-sm" style={{ color: '#0B1F3B' }}>{firm.timezone}</div>
+                    <div className="text-sm" style={{ color: '#0B1F3B' }}>{(firm as any).timezone}</div>
                     </div>
                 </div>
                 <Button 

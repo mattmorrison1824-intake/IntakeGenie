@@ -2,7 +2,7 @@
 
 import { Call, IntakeData, SummaryData } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -14,7 +14,7 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
   const router = useRouter();
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(true); // Default to open
-  const [transcriptOpen, setTranscriptOpen] = useState(true); // Default to open so transcript is visible
+  const [transcriptOpen, setTranscriptOpen] = useState(false); // Default to closed
 
   const intake = (call.intake_json as IntakeData) || {};
   const summary = (call.summary_json as SummaryData) || null;
@@ -132,10 +132,10 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
-                Call ID
+                Status
               </div>
-              <div className="text-xs font-mono" style={{ color: '#0B1F3B' }}>
-                {call.twilio_call_sid}
+              <div style={{ color: '#0B1F3B' }}>
+                {call.status === 'emailed' ? 'Resolved' : call.status}
               </div>
             </div>
             <div>
@@ -210,10 +210,11 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
                 Call Recording
               </h2>
               <Button
-                className="h-9 px-4 rounded-lg font-semibold text-sm"
+                className="h-9 px-4 rounded-lg font-semibold text-sm flex items-center gap-2"
                 style={{ backgroundColor: '#0B1F3B', color: '#FFFFFF' }}
                 onClick={() => window.open(call.recording_url || '', '_blank')}
               >
+                <Play className="w-4 h-4" />
                 Listen to Recording
               </Button>
             </div>
@@ -223,60 +224,7 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
           </div>
         )}
 
-        {/* Call Analytics (Expandable) - Below Call Review */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-          <button
-            onClick={() => setAnalyticsOpen(!analyticsOpen)}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-semibold" style={{ color: '#0B1F3B' }}>Call Analytics</span>
-            {analyticsOpen ? <ChevronUp className="w-5 h-5" style={{ color: '#4A5D73' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#4A5D73' }} />}
-          </button>
-          {analyticsOpen && (
-            <div className="p-4 border-t border-gray-200">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
-                    Route Reason
-                  </div>
-                  <div className="capitalize" style={{ color: '#0B1F3B' }}>
-                    {call.route_reason?.replace('_', ' ')}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
-                    Status
-                  </div>
-                  <div style={{ color: '#0B1F3B' }}>
-                    {call.status}
-                  </div>
-                </div>
-                {intake.full_name && (
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
-                      Caller Name
-                    </div>
-                    <div style={{ color: '#0B1F3B' }}>
-                      {intake.full_name}
-                    </div>
-                  </div>
-                )}
-                {intake.callback_number && (
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
-                      Callback Number
-                    </div>
-                    <div style={{ color: '#0B1F3B' }}>
-                      {intake.callback_number}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Full Transcript (Collapsible, Default Open) */}
+        {/* Full Transcript (Collapsible, Default Closed) */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
           <button
             onClick={() => setTranscriptOpen(!transcriptOpen)}
@@ -338,6 +286,51 @@ export default function CallTranscript({ call }: CallTranscriptProps) {
               </div>
             )}
           </div>
+
+        {/* Call Analytics (Expandable) - Below Full Transcript */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+          <button
+            onClick={() => setAnalyticsOpen(!analyticsOpen)}
+            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <span className="font-semibold" style={{ color: '#0B1F3B' }}>Call Analytics</span>
+            {analyticsOpen ? <ChevronUp className="w-5 h-5" style={{ color: '#4A5D73' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#4A5D73' }} />}
+          </button>
+          {analyticsOpen && (
+            <div className="p-4 border-t border-gray-200">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
+                    Route Reason
+                  </div>
+                  <div className="capitalize" style={{ color: '#0B1F3B' }}>
+                    {call.route_reason?.replace('_', ' ')}
+                  </div>
+                </div>
+                {intake.full_name && (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
+                      Caller Name
+                    </div>
+                    <div style={{ color: '#0B1F3B' }}>
+                      {intake.full_name}
+                    </div>
+                  </div>
+                )}
+                {intake.callback_number && (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#4A5D73' }}>
+                      Callback Number
+                    </div>
+                    <div style={{ color: '#0B1F3B' }}>
+                      {intake.callback_number}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

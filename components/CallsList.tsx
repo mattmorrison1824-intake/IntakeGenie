@@ -1,10 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Call, CallStatus, UrgencyLevel } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Eye, Share2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 interface CallsListProps {
   calls: Call[];
@@ -205,7 +204,7 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A5D73' }}>
-                  Actions
+                  Action
                 </th>
               </tr>
             </thead>
@@ -268,22 +267,6 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Link
-                          href={`/calls/${call.id}`}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          style={{ color: '#4A5D73' }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={(e) => {
-                            // Share functionality can be added here
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          style={{ color: '#4A5D73' }}
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
                         <button
                           onClick={async (e) => {
                             e.preventDefault();

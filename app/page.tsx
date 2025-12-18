@@ -399,29 +399,35 @@ function LandingPageContent() {
             {[
               {
                 name: 'Starter',
-                price: '$99',
+                price: '$49',
                 period: '/month',
-                desc: 'Perfect for small firms getting started',
-                features: ['Up to 100 calls/month', '24/7 AI agent', 'Email summaries', 'Call recordings'],
+                minutes: '60 minutes',
+                approxCalls: '~10 calls',
+                desc: 'Best to begin with',
+                features: ['24/7 AI agent', 'Email summaries', 'Call recordings'],
                 cta: 'Get Started',
                 featured: false
               },
               {
                 name: 'Professional',
-                price: '$299',
+                price: '$149',
                 period: '/month',
-                desc: 'Ideal for growing law firms',
-                features: ['Up to 500 calls/month', '24/7 AI agent', 'Email summaries', 'Call recordings', 'Priority support', 'Advanced analytics'],
+                minutes: '200 minutes',
+                approxCalls: '~30 calls',
+                desc: 'Best for single attorney',
+                features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Priority support', 'Advanced analytics'],
                 cta: 'Get Started',
                 featured: true
               },
               {
-                name: 'Enterprise',
-                price: 'Custom',
-                period: '',
-                desc: 'For large firms with high call volume',
-                features: ['Unlimited calls', '24/7 AI agent', 'Email summaries', 'Call recordings', 'Dedicated support', 'Custom integrations'],
-                cta: 'Contact Sales',
+                name: 'Turbo',
+                price: '$499',
+                period: '/month',
+                minutes: '1000 minutes',
+                approxCalls: '~150 calls',
+                desc: 'For bigger firms',
+                features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Dedicated support', 'Custom integrations'],
+                cta: 'Get Started',
                 featured: false
               }
             ].map((plan, index) => (
@@ -451,7 +457,26 @@ function LandingPageContent() {
                     <span className="text-4xl font-extrabold" style={{ color: '#0B1F3B' }}>{plan.price}</span>
                     <span className="text-lg" style={{ color: '#4A5D73' }}>{plan.period}</span>
               </div>
-                  <p className="text-sm mb-6" style={{ color: '#4A5D73' }}>{plan.desc}</p>
+                  <p className="text-sm mb-4" style={{ color: '#4A5D73' }}>{plan.desc}</p>
+                  <div className="mb-6 flex items-center justify-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: '#0B1F3B' }}>{plan.minutes}</span>
+                    <div className="relative group">
+                      <svg 
+                        className="w-4 h-4 cursor-help" 
+                        style={{ color: '#4A5D73' }} 
+                        fill="currentColor" 
+                        viewBox="0 0 20 20"
+                      >
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                        Approximately {plan.approxCalls} per month
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <ul className="text-left space-y-3 mb-8">
                     {plan.features.map((feature, fIndex) => (
                       <li key={fIndex} className="flex items-start">

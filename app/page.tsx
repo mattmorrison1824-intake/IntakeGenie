@@ -63,7 +63,7 @@ function LandingPageContent() {
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #F5F7FA, #ffffff, #F5F7FA)' }}>
       {/* Navigation */}
       <nav 
-        className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50 transition-all duration-300"
+        className="bg-[#F5F3ED]/80 backdrop-blur-sm border-b sticky top-0 z-50 transition-all duration-300"
         style={{ borderColor: '#4A5D73' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -134,14 +134,14 @@ function LandingPageContent() {
 
       {/* Hero Section */}
       <section 
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32 overflow-visible min-h-[85vh] flex items-center"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 overflow-visible min-h-[85vh] flex items-center"
         ref={(el) => { sectionsRef.current['hero'] = el; }}
       >
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 items-center w-full">
           {/* Left Column - Text Content */}
           <div className="text-left overflow-visible animate-fade-in-up">
             <h1 
-              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight transition-all duration-1000 ${
+              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight transition-all duration-1000 ${
                 isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ color: '#0B1F3B' }}
@@ -162,7 +162,7 @@ function LandingPageContent() {
               </span>
             </h1>
             <p 
-              className={`text-base sm:text-lg mb-6 transition-all duration-1000 delay-200 ${
+              className={`text-lg sm:text-xl md:text-2xl mb-6 transition-all duration-1000 delay-200 ${
                 isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ color: '#4A5D73' }}
@@ -171,7 +171,7 @@ function LandingPageContent() {
               Get structured summaries delivered to your inbox instantly.
             </p>
             <p 
-              className={`text-xs sm:text-sm mb-8 transition-all duration-1000 delay-300 ${
+              className={`text-sm sm:text-base mb-8 transition-all duration-1000 delay-300 ${
                 isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ color: '#4A5D73' }}
@@ -194,7 +194,7 @@ function LandingPageContent() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-6 py-3 rounded-lg text-base font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer text-center"
+                  className="px-6 py-3 rounded-lg text-base font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer text-center flex items-center justify-center"
                   style={{ backgroundColor: '#0B1F3B' }}
                 >
                   Start Free Trial - No Credit Card
@@ -237,7 +237,7 @@ function LandingPageContent() {
             <img
               src="/hero-illustration.png"
               alt="IntakeGenie AI Assistant"
-              className="w-full max-w-2xl lg:max-w-4xl h-auto transition-all duration-500 hover:scale-[1.02]"
+              className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl h-auto transition-all duration-500 hover:scale-[1.02]"
             />
           </div>
         </div>
@@ -332,7 +332,7 @@ function LandingPageContent() {
           ].map((feature, index) => (
             <div
               key={index}
-              className={`bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${
+              className={`bg-[#F5F3ED] p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${
                 isVisible['features'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ 
@@ -483,7 +483,7 @@ function LandingPageContent() {
             ].map((plan, index) => (
               <div
                 key={index}
-                className={`bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 relative ${
+                className={`bg-[#F5F3ED] p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 relative ${
                   plan.featured ? 'border-2' : ''
                 } ${
                   isVisible['pricing'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'

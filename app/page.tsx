@@ -133,117 +133,98 @@ function LandingPageContent() {
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 overflow-visible">
-        <div 
-          className="text-center overflow-visible animate-fade-in-up"
-          ref={(el) => { sectionsRef.current['hero'] = el; }}
-        >
-          <h1 
-            className={`text-5xl md:text-6xl font-extrabold mb-6 leading-[1.1] py-2 transition-all duration-1000 ${
-              isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-            style={{ color: '#0B1F3B' }}
-          >
-            Never Miss a{' '}
-            <span 
-              className="block leading-[1.1] py-1 mt-2 animate-gradient bg-gradient-to-r from-[#0B1F3B] via-[#4A5D73] to-[#C9A24D] bg-clip-text text-transparent bg-[length:200%_auto]"
-              style={{ 
-                background: 'linear-gradient(to right, #0B1F3B, #C9A24D)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                display: 'inline-block',
-                animation: 'gradient-shift 3s ease infinite'
-              }}
+      <section 
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 overflow-visible"
+        ref={(el) => { sectionsRef.current['hero'] = el; }}
+      >
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-left overflow-visible animate-fade-in-up">
+            <h1 
+              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight transition-all duration-1000 ${
+                isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+              style={{ color: '#0B1F3B' }}
             >
-              Legal Lead Again
-            </span>
-          </h1>
-          <p 
-            className={`text-xl mb-8 max-w-3xl mx-auto transition-all duration-1000 delay-200 ${
-              isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-            style={{ color: '#4A5D73' }}
-          >
-            AI-powered voice agent that captures intake information when your firm is busy or closed.
-            Get structured summaries delivered to your inbox instantly.
-          </p>
-          <p 
-            className={`text-sm mb-8 max-w-2xl mx-auto transition-all duration-1000 delay-300 ${
-              isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-            style={{ color: '#4A5D73' }}
-          >
-            No credit card required • Set up in 10 minutes • Cancel anytime
-          </p>
-          <div 
-            className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-400 ${
-              isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            {isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer"
-                style={{ backgroundColor: '#0B1F3B' }}
+              Never Miss a{' '}
+              <span 
+                className="block leading-tight mt-2 animate-gradient bg-gradient-to-r from-[#0B1F3B] via-[#4A5D73] to-[#C9A24D] bg-clip-text text-transparent bg-[length:200%_auto]"
+                style={{ 
+                  background: 'linear-gradient(to right, #0B1F3B, #C9A24D)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  display: 'inline-block',
+                  animation: 'gradient-shift 3s ease infinite'
+                }}
               >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer"
-                style={{ backgroundColor: '#0B1F3B' }}
-              >
-                Start Free Trial - No Credit Card
-              </Link>
-            )}
-            <Link
-              href="#features"
-              className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg border-2 bg-white hover:[background-color:#F5F7FA] hover:scale-105 transform hover:-translate-y-1 cursor-pointer"
-              style={{ color: '#0B1F3B', borderColor: '#0B1F3B' }}
+                Legal Lead Again
+              </span>
+            </h1>
+            <p 
+              className={`text-lg sm:text-xl mb-6 transition-all duration-1000 delay-200 ${
+                isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+              style={{ color: '#4A5D73' }}
             >
-              See How It Works
-            </Link>
+              AI-powered voice agent that captures intake information when your firm is busy or closed.
+              Get structured summaries delivered to your inbox instantly.
+            </p>
+            <p 
+              className={`text-sm sm:text-base mb-8 transition-all duration-1000 delay-300 ${
+                isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+              style={{ color: '#4A5D73' }}
+            >
+              No credit card required • Set up in 10 minutes • Cancel anytime
+            </p>
+            <div 
+              className={`flex flex-col sm:flex-row gap-4 transition-all duration-1000 delay-400 ${
+                isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer text-center"
+                  style={{ backgroundColor: '#0B1F3B' }}
+                >
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer text-center"
+                  style={{ backgroundColor: '#0B1F3B' }}
+                >
+                  Start Free Trial - No Credit Card
+                </Link>
+              )}
+              <Link
+                href="#features"
+                className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg border-2 bg-white hover:[background-color:#F5F7FA] hover:scale-105 transform hover:-translate-y-1 cursor-pointer text-center"
+                style={{ color: '#0B1F3B', borderColor: '#0B1F3B' }}
+              >
+                See How It Works
+              </Link>
+            </div>
           </div>
-        </div>
 
-        {/* Hero Image/Illustration */}
-        <div 
-          className={`mt-16 flex justify-center transition-all duration-1000 delay-500 ${
-            isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-          }`}
-        >
-          <div className="relative w-full max-w-4xl">
-            <div className="rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]" style={{ background: 'linear-gradient(to right, rgba(11, 31, 59, 0.1), rgba(201, 162, 77, 0.1))' }}>
-              <div className="bg-white rounded-lg p-6 shadow-lg">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center animate-pulse" style={{ backgroundColor: '#0B1F3B' }}>
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-                    <div className="h-3 bg-gray-100 rounded w-24 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="h-4 rounded w-full animate-pulse" style={{ backgroundColor: 'rgba(11, 31, 59, 0.1)', animationDelay: '0.1s' }}></div>
-                  <div className="h-4 rounded w-3/4 animate-pulse" style={{ backgroundColor: 'rgba(11, 31, 59, 0.1)', animationDelay: '0.2s' }}></div>
-                  <div className="h-4 rounded w-5/6 animate-pulse" style={{ backgroundColor: 'rgba(201, 162, 77, 0.1)', animationDelay: '0.3s' }}></div>
-                </div>
-              </div>
+          {/* Right Column - Hero Illustration */}
+          <div 
+            className={`flex justify-center lg:justify-end items-center transition-all duration-1000 delay-500 ${
+              isVisible['hero'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            }`}
+          >
+            <div className="relative w-full max-w-lg lg:max-w-xl">
+              <img
+                src="/hero-illustration.png"
+                alt="IntakeGenie AI Assistant"
+                className="w-full h-auto rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]"
+                style={{ 
+                  objectFit: 'contain',
+                }}
+              />
             </div>
           </div>
         </div>

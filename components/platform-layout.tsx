@@ -25,7 +25,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 justify-end">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 justify-end bg-sidebar">
           <div className="flex items-center">
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="cursor-pointer">
               <LogOut className="h-4 w-4 mr-2" />

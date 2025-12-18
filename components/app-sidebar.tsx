@@ -50,7 +50,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center justify-center px-2 py-3">
+        <Link href="/dashboard" className="flex items-center justify-start px-2 py-3">
           <img
             src="/full-logo.png"
             alt="IntakeGenie"
@@ -60,7 +60,6 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

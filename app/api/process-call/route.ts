@@ -14,7 +14,8 @@ async function sendBasicFallbackEmail(
   intake: IntakeData,
   transcript: string | null,
   recordingUrl: string | null,
-  urgency: UrgencyLevel
+  urgency: UrgencyLevel,
+  callerPhoneNumber?: string
 ) {
   const subject = urgency === 'high' 
     ? `[HIGH URGENCY] Intake Call - ${intake.full_name || 'Unknown'} — ${new Date().toLocaleDateString()}`
@@ -39,7 +40,7 @@ async function sendBasicFallbackEmail(
         <h3>Caller Details</h3>
         <ul>
           <li><strong>Name:</strong> ${intake.full_name || 'Not provided'}</li>
-          <li><strong>Phone:</strong> ${intake.callback_number || 'Not provided'}</li>
+          <li><strong>Phone:</strong> ${intake.callback_number || callerPhoneNumber || 'Not provided'}</li>
           <li><strong>Email:</strong> ${intake.email || 'Not provided'}</li>
         </ul>
         ${intake.reason_for_call ? `<h3>Reason for Call</h3><p>${intake.reason_for_call}</p>` : ''}
@@ -291,7 +292,8 @@ export async function POST(request: NextRequest) {
           summary,
           transcript,
           recordingUrl,
-          call.urgency as any
+          call.urgency as any,
+          call.from_number // Pass caller's phone number from call metadata
         );
         // Update status to emailed only after successful email
         await supabase
@@ -309,7 +311,8 @@ export async function POST(request: NextRequest) {
             intake,
             transcript,
             recordingUrl,
-            call.urgency as any
+            call.urgency as any,
+            call.from_number
           );
           await supabase
             .from('calls')

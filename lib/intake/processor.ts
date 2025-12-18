@@ -279,7 +279,8 @@ async function finalizeCallRecord(
         summary,
         transcript || null,
         recordingUrl || call.recording_url || null, // Use recording URL if available
-        call.urgency as UrgencyLevel
+        call.urgency as UrgencyLevel,
+        call.from_number || phoneNumber // Pass caller's phone number from call metadata
       );
       await supabase
         .from('calls')

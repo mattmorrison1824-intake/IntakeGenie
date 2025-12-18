@@ -9,24 +9,101 @@ if (!apiKey) {
 
 export const resend = new Resend(apiKey);
 
+// Helper function to extract caller information from multiple sources
+function extractCallerInfo(
+  intake: IntakeData,
+  summary: SummaryData,
+  transcript: string | null
+): { name: string; phone: string; email: string } {
+  let name = intake.full_name || '';
+  let phone = intake.callback_number || '';
+  let email = intake.email || '';
+
+  // Try to extract name from summary bullets if not in intake
+  if (!name && summary.summary_bullets) {
+    for (const bullet of summary.summary_bullets) {
+      // Look for patterns like "Caller is [Name]" or "Caller: [Name]"
+      const callerMatch = bullet.match(/Caller\s+(?:is|:)\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|$)/i);
+      if (callerMatch && callerMatch[1]) {
+        name = callerMatch[1].trim();
+        break;
+      }
+      // Also check if bullet starts with a name pattern
+      const nameMatch = bullet.match(/^([A-Z][a-zA-Z\s]+?)\s+(?:is|was|has|had)/);
+      if (nameMatch && nameMatch[1] && nameMatch[1].length > 2) {
+        name = nameMatch[1].trim();
+        break;
+      }
+    }
+  }
+
+  // Try to extract name from summary title if it contains a name
+  if (!name && summary.title) {
+    // Pattern: "Work Injury Intake - Johnson Smith" or "Intake Call - John Doe"
+    const titleMatch = summary.title.match(/(?:Intake|Call|Injury)\s+[^-]+\s*-\s*([A-Z][a-zA-Z\s]+?)(?:\s*—|$)/i);
+    if (titleMatch && titleMatch[1]) {
+      name = titleMatch[1].trim();
+    }
+  }
+
+  // Try to extract phone from summary bullets if not in intake
+  if (!phone && summary.summary_bullets) {
+    for (const bullet of summary.summary_bullets) {
+      // Look for phone number patterns
+      const phoneMatch = bullet.match(/(?:Phone|Number|Callback):\s*([+\d\s\-\(\)]+)/i);
+      if (phoneMatch && phoneMatch[1]) {
+        phone = phoneMatch[1].trim();
+        break;
+      }
+    }
+  }
+
+  // Try to extract email from summary bullets if not in intake
+  if (!email && summary.summary_bullets) {
+    for (const bullet of summary.summary_bullets) {
+      // Look for email patterns
+      const emailMatch = bullet.match(/(?:Email|E-mail):\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+      if (emailMatch && emailMatch[1]) {
+        email = emailMatch[1].trim();
+        break;
+      }
+    }
+  }
+
+  return {
+    name: name || 'Not provided',
+    phone: phone || 'Not provided',
+    email: email || 'Not provided',
+  };
+}
+
 export async function sendIntakeEmail(
   to: string[],
   intake: IntakeData,
   summary: SummaryData,
   transcript: string | null,
   recordingUrl: string | null,
-  urgency: UrgencyLevel
+  urgency: UrgencyLevel,
+  callerPhoneNumber?: string // Optional: caller's phone number from call metadata
 ) {
+  // Extract caller info from multiple sources
+  const callerInfo = extractCallerInfo(intake, summary, transcript);
+  
+  // Use callerPhoneNumber if callback_number is not available
+  if (callerInfo.phone === 'Not provided' && callerPhoneNumber) {
+    callerInfo.phone = callerPhoneNumber;
+  }
+
   const subject = urgency === 'high' 
-    ? `[HIGH URGENCY] New Intake Call: ${intake.full_name || 'Unknown'} — ${new Date().toLocaleDateString()}`
-    : `New Intake Call: ${intake.full_name || 'Unknown'} — ${new Date().toLocaleDateString()}`;
+    ? `[HIGH URGENCY] New Intake Call: ${callerInfo.name} — ${new Date().toLocaleDateString()}`
+    : `New Intake Call: ${callerInfo.name} — ${new Date().toLocaleDateString()}`;
 
   const callerDetails = `
     <h3>Caller Details</h3>
     <ul>
-      <li><strong>Name:</strong> ${intake.full_name || 'Not provided'}</li>
-      <li><strong>Phone:</strong> ${intake.callback_number || 'Not provided'}</li>
-      <li><strong>Email:</strong> ${intake.email || 'Not provided'}</li>
+      <li><strong>Name:</strong> ${callerInfo.name}</li>
+      <li><strong>Phone:</strong> ${callerInfo.phone}</li>
+      <li><strong>Email:</strong> ${callerInfo.email}</li>
     </ul>
   `;
 

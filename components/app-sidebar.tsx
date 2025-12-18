@@ -50,13 +50,12 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-3 px-2 py-3">
+        <Link href="/dashboard" className="flex items-center px-2 py-3">
           <img
-            src="/logo.png"
+            src="/full-logo.png"
             alt="IntakeGenie"
             className="h-12 w-auto"
           />
-          <span className="text-xl font-semibold">IntakeGenie</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

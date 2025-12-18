@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
         subscription_plan: plan,
         stripe_price_id: newPriceId,
         subscription_status: updatedSubscription.status,
-        subscription_current_period_end: updatedSubscription.current_period_end
-          ? new Date(updatedSubscription.current_period_end * 1000).toISOString()
+        subscription_current_period_end: (updatedSubscription as any).current_period_end
+          ? new Date((updatedSubscription as any).current_period_end * 1000).toISOString()
           : null,
       })
       .eq('id', firm.id);

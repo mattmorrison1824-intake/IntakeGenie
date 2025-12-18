@@ -154,14 +154,17 @@ export async function POST(req: NextRequest) {
             .single();
 
           if (firm) {
-            await supabase
-              .from('firms')
-              // @ts-ignore - New fields not in types yet
-              .update({
-                subscription_status: 'canceled',
-                stripe_subscription_id: null,
-              })
-              .eq('id', firm.id);
+            const firmId = (firm as any).id;
+            if (firmId) {
+              await supabase
+                .from('firms')
+                // @ts-ignore - New fields not in types yet
+                .update({
+                  subscription_status: 'canceled',
+                  stripe_subscription_id: null,
+                })
+                .eq('id', firmId);
+            }
           }
         }
         break;

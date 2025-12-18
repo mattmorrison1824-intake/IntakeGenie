@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const firmId = subscription.metadata?.firm_id;
+        const customerId = subscription.customer as string;
 
         if (firmId) {
           await supabase
@@ -144,6 +145,24 @@ export async function POST(req: NextRequest) {
               stripe_subscription_id: null,
             })
             .eq('id', firmId);
+        } else if (customerId) {
+          // Fallback: try to find firm by customer ID
+          const { data: firm } = await supabase
+            .from('firms')
+            .select('id')
+            .eq('stripe_customer_id', customerId)
+            .single();
+
+          if (firm) {
+            await supabase
+              .from('firms')
+              // @ts-ignore - New fields not in types yet
+              .update({
+                subscription_status: 'canceled',
+                stripe_subscription_id: null,
+              })
+              .eq('id', firm.id);
+          }
         }
         break;
       }

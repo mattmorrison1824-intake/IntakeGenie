@@ -7,7 +7,10 @@ import { createBrowserClient } from '@/lib/clients/supabase';
 function LandingPageContent() {
   const [isVisible, setIsVisible] = useState<Record<string, boolean>>({});
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [typedText, setTypedText] = useState('');
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
+  
+  const fullText = "AI-powered voice agent trained on your firm's knowledge base. Captures intake information when your firm is busy or closed. Get structured summaries delivered to your inbox instantly.";
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return createBrowserClient();
@@ -58,6 +61,34 @@ function LandingPageContent() {
       observers.forEach((observer) => observer.disconnect());
     };
   }, []);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!isVisible['hero']) {
+      setTypedText('');
+      return;
+    }
+
+    let currentIndex = 0;
+    const typingSpeed = 30; // milliseconds per character
+
+    const typeNextChar = () => {
+      if (currentIndex < fullText.length) {
+        setTypedText(fullText.slice(0, currentIndex + 1));
+        currentIndex++;
+        setTimeout(typeNextChar, typingSpeed);
+      }
+    };
+
+    // Start typing after a short delay
+    const timeout = setTimeout(() => {
+      typeNextChar();
+    }, 500);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isVisible['hero'], fullText]);
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #F5F7FA, #ffffff, #F5F7FA)' }}>
@@ -167,8 +198,10 @@ function LandingPageContent() {
               }`}
               style={{ color: '#4A5D73' }}
             >
-              AI-powered voice agent trained on your firm's knowledge base. Captures intake information when your firm is busy or closed.
-              Get structured summaries delivered to your inbox instantly.
+              {typedText}
+              {typedText.length < fullText.length && (
+                <span className="animate-pulse" style={{ color: '#C9A24D' }}>|</span>
+              )}
             </p>
             <p 
               className={`text-sm sm:text-base mb-8 transition-all duration-1000 delay-300 ${

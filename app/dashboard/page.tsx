@@ -4,7 +4,7 @@ import { PlatformLayout } from '@/components/platform-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import PhoneNumberProvision from '@/components/PhoneNumberProvision';
+import PhoneNumberGenerate from '@/components/PhoneNumberProvision';
 
 // Force dynamic rendering since we use cookies for authentication
 export const dynamic = 'force-dynamic';
@@ -186,108 +186,8 @@ export default async function DashboardPage() {
                 </div>
                       </div>
 
-              {/* Subscription Status */}
-              <div 
-                className="bg-white rounded-xl shadow-sm p-8"
-                style={{
-                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                }}
-              >
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-1" style={{ color: '#4A5D73' }}>
-                    Subscription
-                  </h2>
-                  <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.7 }}>
-                    Your current subscription plan and status
-                  </p>
-                </div>
-                
-                {(firm as any).subscription_status && (firm as any).subscription_status !== 'inactive' ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-6 md:grid-cols-2 border-b border-gray-200 pb-6">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
-                          Current Plan
-                        </div>
-                        <div className="text-lg font-bold capitalize" style={{ color: '#0B1F3B' }}>
-                          {(firm as any).subscription_plan || 'Unknown'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
-                          Status
-                        </div>
-                        <div>
-                          <span
-                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                              (firm as any).subscription_status === 'active' || (firm as any).subscription_status === 'trialing'
-                                ? 'bg-green-50 text-green-700 border border-green-200'
-                                : (firm as any).subscription_status === 'canceled' || (firm as any).subscription_status === 'past_due' || (firm as any).subscription_status === 'unpaid'
-                                ? 'bg-red-50 text-red-700 border border-red-200'
-                                : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                            }`}
-                          >
-                            {(firm as any).subscription_status === 'trialing' ? 'Trial' : (firm as any).subscription_status.replace('_', ' ')}
-                          </span>
-                        </div>
-                      </div>
-                      {(firm as any).subscription_current_period_end && ((firm as any).subscription_status === 'active' || (firm as any).subscription_status === 'trialing') && (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
-                            {(firm as any).subscription_cancel_at_period_end ? 'Expires On' : 'Renews On'}
-                          </div>
-                          <div className="text-sm" style={{ color: '#0B1F3B' }}>
-                            {new Date((firm as any).subscription_current_period_end).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      {(firm as any).subscription_cancel_at_period_end && (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A5D73' }}>
-                            Cancellation
-                          </div>
-                          <div className="text-sm text-orange-600">
-                            Will cancel at period end
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      asChild 
-                      variant="outline"
-                      className="h-12 px-6 rounded-lg font-semibold cursor-pointer border"
-                      style={{ 
-                        borderColor: '#E5E7EB',
-                        color: '#0B1F3B',
-                      }}
-                    >
-                      <Link href="/">Manage Subscription</Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="pb-6">
-                      <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.8 }}>
-                        No active subscription. Subscribe to a plan to start using IntakeGenie.
-                      </p>
-                    </div>
-                    <Button 
-                      asChild 
-                      className="h-12 px-6 rounded-lg font-semibold cursor-pointer"
-                      style={{ backgroundColor: '#0B1F3B', color: '#FFFFFF' }}
-                    >
-                      <Link href="/">View Plans</Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Phone Number Provision/Display */}
-              <PhoneNumberProvision 
+              {/* Phone Number Generate/Display */}
+              <PhoneNumberGenerate 
                 firm={firm}
               />
 

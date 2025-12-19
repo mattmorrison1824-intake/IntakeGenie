@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
 
     const firm = firmData as any;
 
-    // Check if phone number already exists - prevent duplicate provisioning
+    // Check if phone number already exists - prevent duplicate generation
     if (firm.inbound_number_e164 || firm.vapi_phone_number_id || firm.twilio_phone_number_sid) {
       return NextResponse.json({
-        error: 'Phone number already provisioned',
-        message: 'This firm already has a phone number. Only one number can be provisioned per firm.',
+        error: 'Phone number already generated',
+        message: 'This firm already has a phone number. Only one number can be generated per firm.',
         phoneNumber: firm.inbound_number_e164,
         vapiPhoneNumberId: firm.vapi_phone_number_id,
         twilioPhoneNumberSid: firm.twilio_phone_number_sid,
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const webhookUrl = `${appUrl}/api/vapi/webhook`;
 
     // Step 1: Create or get Vapi assistant
-    console.log('[Telephony Provision] Step 1: Creating/getting Vapi assistant...');
+    console.log('[Telephony Generate] Step 1: Creating/getting Vapi assistant...');
     let assistantId = firm.vapi_assistant_id;
 
     if (!assistantId) {
@@ -123,21 +123,21 @@ export async function POST(req: NextRequest) {
       try {
         const assistantResponse = await vapi.post('/assistant', assistantPayload);
         assistantId = assistantResponse.data.id;
-        console.log('[Telephony Provision] Assistant created:', assistantId);
+        console.log('[Telephony Generate] Assistant created:', assistantId);
       } catch (vapiError: any) {
         const errorDetails = vapiError?.response?.data || vapiError?.message;
-        console.error('[Telephony Provision] Assistant creation error:', errorDetails);
+        console.error('[Telephony Generate] Assistant creation error:', errorDetails);
         return NextResponse.json({
           error: 'Failed to create assistant',
           details: errorDetails,
         }, { status: 500 });
       }
     } else {
-      console.log('[Telephony Provision] Using existing assistant:', assistantId);
+      console.log('[Telephony Generate] Using existing assistant:', assistantId);
     }
 
     // Step 2: Purchase Twilio phone number
-    console.log('[Telephony Provision] Step 2: Purchasing Twilio phone number...');
+    console.log('[Telephony Generate] Step 2: Purchasing Twilio phone number...');
     const twilioClient = twilio(accountSid, authToken);
 
     let purchasedNumber;
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
 
       if (areaCode) {
         searchParams.areaCode = areaCode;
-        console.log('[Telephony Provision] Searching for numbers with area code:', areaCode);
+        console.log('[Telephony Generate] Searching for numbers with area code:', areaCode);
       }
 
       const searchResults = await twilioClient.availablePhoneNumbers('US')
@@ -169,10 +169,10 @@ export async function POST(req: NextRequest) {
         // Note: We don't set voiceUrl here - Vapi will configure it when we import
       });
 
-      console.log('[Telephony Provision] Twilio number purchased:', purchasedNumber.phoneNumber);
-      console.log('[Telephony Provision] Twilio SID:', purchasedNumber.sid);
+      console.log('[Telephony Generate] Twilio number purchased:', purchasedNumber.phoneNumber);
+      console.log('[Telephony Generate] Twilio SID:', purchasedNumber.sid);
     } catch (twilioError: any) {
-      console.error('[Telephony Provision] Twilio purchase error:', twilioError);
+      console.error('[Telephony Generate] Twilio purchase error:', twilioError);
       return NextResponse.json({
         error: 'Failed to purchase Twilio number',
         details: twilioError.message || 'Unknown error',
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
     if (!twilioPhoneNumber.startsWith('+')) {
       // If Twilio didn't return E.164 format, add +1 for US numbers
       twilioPhoneNumber = `+1${twilioPhoneNumber.replace(/\D/g, '')}`;
-      console.log('[Telephony Provision] Converted phone number to E.164:', twilioPhoneNumber);
+      console.log('[Telephony Generate] Converted phone number to E.164:', twilioPhoneNumber);
     }
 
     // Validate E.164 format (starts with +, followed by country code and number)
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
     // According to Vapi Postman docs: https://www.postman.com/vapiai/public-workspace/request/l2eelnz/import-twilio-number
     // Use the specific import endpoint: /phone-number/import/twilio
     // This endpoint accepts credentials directly - no need to create credential separately
-    console.log('[Telephony Provision] Step 3: Importing Twilio number into Vapi...');
+    console.log('[Telephony Generate] Step 3: Importing Twilio number into Vapi...');
     let vapiPhoneNumberId: string;
     // Declare importPayload outside try block for error logging
     let importPayload: any = null;
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
         twilioAuthToken: authToken,
       });
 
-      console.log('[Telephony Provision] Vapi import payload:', JSON.stringify(importPayload, null, 2));
+      console.log('[Telephony Generate] Vapi import payload:', JSON.stringify(importPayload, null, 2));
 
       // Use the specific Twilio import endpoint as per Postman docs
       const importResponse = await vapi.post('/phone-number/import/twilio', importPayload);
@@ -227,26 +227,26 @@ export async function POST(req: NextRequest) {
         throw new Error('No phone number ID returned from Vapi import');
       }
 
-      console.log('[Telephony Provision] Vapi import successful. Phone number ID:', vapiPhoneNumberId);
-      console.log('[Telephony Provision] Vapi import response:', JSON.stringify(importResponse.data, null, 2));
+      console.log('[Telephony Generate] Vapi import successful. Phone number ID:', vapiPhoneNumberId);
+      console.log('[Telephony Generate] Vapi import response:', JSON.stringify(importResponse.data, null, 2));
     } catch (vapiError: any) {
       const errorDetails = vapiError?.response?.data || vapiError?.message;
       const errorStatus = vapiError?.response?.status || 500;
       
-      console.error('[Telephony Provision] ========== VAPI IMPORT ERROR ==========');
-      console.error('[Telephony Provision] Error status:', errorStatus);
-      console.error('[Telephony Provision] Error details:', JSON.stringify(errorDetails, null, 2));
-      console.error('[Telephony Provision] Full error:', JSON.stringify(vapiError, null, 2));
+      console.error('[Telephony Generate] ========== VAPI IMPORT ERROR ==========');
+      console.error('[Telephony Generate] Error status:', errorStatus);
+      console.error('[Telephony Generate] Error details:', JSON.stringify(errorDetails, null, 2));
+      console.error('[Telephony Generate] Full error:', JSON.stringify(vapiError, null, 2));
       if (importPayload) {
-        console.error('[Telephony Provision] Request payload:', JSON.stringify(importPayload, null, 2));
+        console.error('[Telephony Generate] Request payload:', JSON.stringify(importPayload, null, 2));
       }
       
       // If import fails, we should clean up the Twilio number
       try {
         await twilioClient.incomingPhoneNumbers(twilioSid).remove();
-        console.log('[Telephony Provision] Cleaned up Twilio number after import failure');
+        console.log('[Telephony Generate] Cleaned up Twilio number after import failure');
       } catch (cleanupError) {
-        console.error('[Telephony Provision] Failed to cleanup Twilio number:', cleanupError);
+        console.error('[Telephony Generate] Failed to cleanup Twilio number:', cleanupError);
       }
 
       // Extract detailed error message
@@ -272,29 +272,29 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 4: Verify assistant is assigned (may need to assign if not included in import)
-    console.log('[Telephony Provision] Step 4: Verifying assistant assignment...');
+    console.log('[Telephony Generate] Step 4: Verifying assistant assignment...');
     try {
       const getResponse = await vapi.get(`/phone-number/${vapiPhoneNumberId}`);
       const phoneData = getResponse.data;
 
       if (phoneData.assistantId !== assistantId) {
-        console.log('[Telephony Provision] Assistant not assigned, assigning now...');
+        console.log('[Telephony Generate] Assistant not assigned, assigning now...');
         const patchPayload = cleanVapiPayload({
           assistantId: assistantId,
         });
 
         await vapi.patch(`/phone-number/${vapiPhoneNumberId}`, patchPayload);
-        console.log('[Telephony Provision] Assistant assigned successfully');
+        console.log('[Telephony Generate] Assistant assigned successfully');
       } else {
-        console.log('[Telephony Provision] Assistant already assigned');
+        console.log('[Telephony Generate] Assistant already assigned');
       }
     } catch (verifyError: any) {
-      console.warn('[Telephony Provision] Could not verify/assign assistant:', verifyError?.response?.data || verifyError?.message);
+      console.warn('[Telephony Generate] Could not verify/assign assistant:', verifyError?.response?.data || verifyError?.message);
       // Continue - assistant may be assigned via import
     }
 
     // Step 5: Save to database
-    console.log('[Telephony Provision] Step 5: Saving to database...');
+    console.log('[Telephony Generate] Step 5: Saving to database...');
     const { error: updateError } = await supabase
       .from('firms')
       // @ts-ignore
@@ -308,13 +308,13 @@ export async function POST(req: NextRequest) {
       .eq('id', firmId);
 
     if (updateError) {
-      console.error('[Telephony Provision] Database update error:', updateError);
+      console.error('[Telephony Generate] Database update error:', updateError);
       return NextResponse.json({ error: 'Failed to save to database' }, { status: 500 });
     }
 
-    console.log('[Telephony Provision] ✅ Provisioning complete!');
-    console.log('[Telephony Provision] Phone number:', twilioPhoneNumber);
-    console.log('[Telephony Provision] Vapi phone number ID:', vapiPhoneNumberId);
+    console.log('[Telephony Generate] ✅ Provisioning complete!');
+    console.log('[Telephony Generate] Phone number:', twilioPhoneNumber);
+    console.log('[Telephony Generate] Vapi phone number ID:', vapiPhoneNumberId);
 
     return NextResponse.json({
       success: true,
@@ -324,8 +324,8 @@ export async function POST(req: NextRequest) {
       message: 'Phone number provisioned successfully',
     });
   } catch (error: any) {
-    console.error('[Telephony Provision] Unexpected error:', error);
-    console.error('[Telephony Provision] Error stack:', error?.stack);
+    console.error('[Telephony Generate] Unexpected error:', error);
+    console.error('[Telephony Generate] Error stack:', error?.stack);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',

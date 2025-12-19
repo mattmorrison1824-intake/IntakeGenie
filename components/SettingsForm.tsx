@@ -108,8 +108,8 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
 
         if (updateError) throw updateError;
         
-        // Phone number provisioning is now manual via the "Provision Phone Number" button
-        // No auto-provisioning on save
+        // Phone number generation is now manual via the "Generate Phone Number" button
+        // No auto-generation on save
       } else {
         // Create new firm
         // @ts-ignore - Supabase type inference issue
@@ -173,7 +173,7 @@ export default function SettingsForm({ firm, onSave }: SettingsFormProps) {
                 Phone Number
               </h2>
               <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.7 }}>
-                Your provisioned phone number for receiving calls.
+                Your generated phone number for receiving calls.
               </p>
             </div>
 

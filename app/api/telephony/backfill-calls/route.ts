@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (!firm.vapi_assistant_id && !firm.vapi_phone_number_id) {
       return NextResponse.json({ 
         error: 'No Vapi assistant or phone number configured',
-        message: 'Please provision a phone number first'
+        message: 'Please generate a phone number first'
       }, { status: 400 });
     }
 

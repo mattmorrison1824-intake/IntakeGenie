@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     if (!firm.vapi_assistant_id) {
       return NextResponse.json({ 
         error: 'No assistant found',
-        message: 'Assistant must be created first by provisioning a phone number'
+        message: 'Assistant must be created first by generating a phone number'
       }, { status: 400 });
     }
 

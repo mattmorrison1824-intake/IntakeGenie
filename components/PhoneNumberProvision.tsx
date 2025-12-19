@@ -12,7 +12,7 @@ interface PhoneNumberProvisionProps {
 
 export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumberProvisionProps) {
   const [areaCode, setAreaCode] = useState('');
-  const [provisioning, setProvisioning] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null);
@@ -88,12 +88,12 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
     );
   }
 
-  // If no number exists, show provisioning UI
+  // If no number exists, show generation UI
 
-  const handleProvision = async () => {
+  const handleGenerate = async () => {
     if (!supabase || !firm) return;
     
-    setProvisioning(true);
+    setGenerating(true);
     setError(null);
     setSuccess(false);
     
@@ -112,7 +112,7 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
       const data = await response.json();
       
       if (!response.ok) {
-        let errorMsg = 'Failed to provision number';
+        let errorMsg = 'Failed to generate number';
         if (data.message) {
           errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
         } else if (data.error) {
@@ -122,8 +122,8 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
         }
         
         // If number already exists, show a clear message
-        if (response.status === 409 || errorMsg.includes('already provisioned')) {
-          errorMsg = 'A phone number has already been provisioned for this firm. Only one number is allowed per firm.';
+        if (response.status === 409 || errorMsg.includes('already generated') || errorMsg.includes('already provisioned')) {
+          errorMsg = 'A phone number has already been generated for this firm. Only one number is allowed per firm.';
           // Refresh after a delay
           setTimeout(() => {
             if (typeof window !== 'undefined') {
@@ -149,10 +149,10 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
              }
            }, 2000);
     } catch (err: any) {
-      console.error('Error provisioning number:', err);
-      setError(err.message || 'Failed to provision number. Check browser console for details.');
+      console.error('Error generating number:', err);
+      setError(err.message || 'Failed to generate number. Check browser console for details.');
     } finally {
-      setProvisioning(false);
+      setGenerating(false);
     }
   };
 
@@ -168,7 +168,7 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
           Phone Number
         </h2>
         <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.7 }}>
-          Provision a phone number for your firm. Calls are handled by IntakeGenie's AI assistant.
+          Generate a phone number for your firm. Calls are handled by IntakeGenie's AI assistant.
         </p>
       </div>
 
@@ -187,7 +187,7 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
             color: '#0B1F3B'
           }}
         >
-          <span className="text-sm font-medium">Phone number provisioned successfully!</span>
+          <span className="text-sm font-medium">Phone number generated successfully!</span>
         </div>
       )}
 
@@ -212,7 +212,7 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
               backgroundColor: '#FFFFFF',
               color: '#0B1F3B',
             }}
-            disabled={provisioning}
+            disabled={generating}
           />
           <p className="text-xs mt-1.5" style={{ color: '#4A5D73', opacity: 0.7 }}>
             Leave blank for any available number
@@ -221,15 +221,15 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
         
         <button
           type="button"
-          onClick={handleProvision}
-          disabled={provisioning}
+          onClick={handleGenerate}
+          disabled={generating}
           className="h-12 px-6 rounded-lg font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full"
           style={{
-            backgroundColor: provisioning ? '#4A5D73' : '#0B1F3B',
+            backgroundColor: generating ? '#4A5D73' : '#0B1F3B',
             color: '#FFFFFF',
           }}
         >
-          {provisioning ? 'Provisioning...' : 'Provision Phone Number'}
+          {generating ? 'Generating...' : 'Generate Phone Number'}
         </button>
       </div>
     </div>

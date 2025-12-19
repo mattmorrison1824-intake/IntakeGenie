@@ -35,14 +35,9 @@ export async function POST(request: NextRequest) {
 
     // Otherwise, route to agent
     if (callSid && firmId) {
-      // Update call record with route reason
+      // Note: route_reason field was removed from database
+      // No need to update it anymore
       const supabase = createServiceClient();
-      await supabase
-        .from('calls')
-        // @ts-ignore - Supabase type inference issue
-        .update({ route_reason: 'no_answer' })
-        // @ts-ignore - Supabase type inference issue
-        .eq('twilio_call_sid', callSid);
 
       const appUrl = normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL);
       response.redirect(

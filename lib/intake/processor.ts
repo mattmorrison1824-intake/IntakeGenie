@@ -91,7 +91,6 @@ export async function upsertCall({
         started_at: new Date().toISOString(),
         from_number: phoneNumber || '', // Caller's number
         to_number: toNumber,
-        route_reason: 'after_hours', // Default for Vapi calls
         twilio_call_sid: null, // Vapi calls don't have Twilio call SID
       })
       .select()
@@ -173,7 +172,6 @@ export async function finalizeCall({
           status: 'summarizing',
           urgency: 'normal',
           started_at: new Date().toISOString(), // Approximate
-          route_reason: 'after_hours',
           twilio_call_sid: null, // Vapi calls don't have Twilio call SID
         })
         .select('*, firms(*)')

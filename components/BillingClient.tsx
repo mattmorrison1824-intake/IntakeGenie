@@ -24,10 +24,12 @@ interface Invoice {
   description: string | null;
 }
 
+import { PLAN_LIMITS } from '@/lib/constants/plans';
+
 const PLAN_DETAILS = {
-  starter: { name: 'Starter', price: '$49', minutes: '60 minutes' },
-  professional: { name: 'Professional', price: '$149', minutes: '200 minutes' },
-  turbo: { name: 'Turbo', price: '$499', minutes: '1000 minutes' },
+  starter: { name: PLAN_LIMITS.starter.name, price: `$${PLAN_LIMITS.starter.price}`, minutes: `${PLAN_LIMITS.starter.minutesPerMonth} minutes` },
+  professional: { name: PLAN_LIMITS.professional.name, price: `$${PLAN_LIMITS.professional.price}`, minutes: `${PLAN_LIMITS.professional.minutesPerMonth} minutes` },
+  turbo: { name: PLAN_LIMITS.turbo.name, price: `$${PLAN_LIMITS.turbo.price}`, minutes: `${PLAN_LIMITS.turbo.minutesPerMonth} minutes` },
 };
 
 export default function BillingClient({ firm }: BillingClientProps) {

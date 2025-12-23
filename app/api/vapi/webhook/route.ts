@@ -319,6 +319,63 @@ export async function POST(req: NextRequest) {
         // Still return 200 to prevent retries
         return NextResponse.json({ ok: true, warning: 'Cannot create call - firmId missing' });
       }
+
+      // Check usage limits before allowing new calls (only for new call starts)
+      // Skip check if this is an update to an existing call
+      const { data: existingCall } = await supabase
+        .from('calls')
+        .select('id')
+        .eq('vapi_conversation_id', conversation_id)
+        .maybeSingle();
+
+      if (!existingCall) {
+        // This is a new call - check usage limits
+        const { data: firmData } = await supabase
+          .from('firms')
+          .select('subscription_plan, subscription_status')
+          .eq('id', firmId)
+          .single();
+
+        if (firmData) {
+          const plan = (firmData as any).subscription_plan as string | null;
+          const status = (firmData as any).subscription_status as string | null;
+
+          // Allow calls if on trial or active subscription
+          if (status === 'trialing' || status === 'active') {
+            // Import usage check dynamically to avoid circular dependencies
+            const { canMakeCall } = await import('@/lib/utils/usage');
+            const usageCheck = await canMakeCall(firmId, plan as any, 2);
+
+            if (!usageCheck.allowed) {
+              console.warn('[Vapi Webhook] Call blocked - usage limit exceeded:', {
+                firmId,
+                plan,
+                used: usageCheck.used,
+                limit: usageCheck.limit,
+                remaining: usageCheck.remaining,
+              });
+              // Return 200 to prevent retries, but log the issue
+              // The call will be rejected by Vapi or we can send a message to the caller
+              return NextResponse.json({
+                ok: true,
+                warning: 'Usage limit exceeded',
+                message: usageCheck.reason,
+              });
+            }
+          } else if (status !== 'trialing' && status !== 'active') {
+            // Subscription not active - block call
+            console.warn('[Vapi Webhook] Call blocked - subscription not active:', {
+              firmId,
+              status,
+            });
+            return NextResponse.json({
+              ok: true,
+              warning: 'Subscription not active',
+              message: 'Your subscription is not active. Please update your payment method or subscribe to continue receiving calls.',
+            });
+          }
+        }
+      }
       
       try {
         const result = await upsertCall({

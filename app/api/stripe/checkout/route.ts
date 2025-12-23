@@ -18,11 +18,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { plan } = await req.json();
+    const { plan, trial } = await req.json();
 
     if (!plan || !['starter', 'professional', 'turbo'].includes(plan)) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
+
+    // Only starter plan can have free trial
+    const isTrial = trial === true && plan === 'starter';
 
     // Get user's firm
     const { data: firmData, error: firmError } = await supabase
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSessionParams: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -103,7 +106,15 @@ export async function POST(req: NextRequest) {
           plan: plan,
         },
       },
-    });
+    };
+
+    // Add 14-day free trial for starter plan only
+    if (isTrial) {
+      checkoutSessionParams.subscription_data.trial_period_days = 14;
+      checkoutSessionParams.payment_method_collection = 'if_required'; // Don't require payment method for trial
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionParams);
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error: any) {

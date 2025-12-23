@@ -16,9 +16,6 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null);
-  const [fixingWebhook, setFixingWebhook] = useState(false);
-  const [fixWebhookError, setFixWebhookError] = useState<string | null>(null);
-  const [fixWebhookSuccess, setFixWebhookSuccess] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,69 +78,6 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
               View in Vapi Dashboard
             </a>
           </p>
-        )}
-        {firm?.inbound_number_e164 && firm?.telephony_provider && (
-          <p className="text-xs mt-2" style={{ color: '#4A5D73', opacity: 0.7 }}>
-            Provider: {firm.telephony_provider === 'twilio_imported_into_vapi' ? 'Twilio + Vapi' : firm.telephony_provider}
-          </p>
-        )}
-        
-        {/* Fix Webhook Button */}
-        {firm.vapi_assistant_id && (
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
-            <p className="text-sm mb-3" style={{ color: '#4A5D73', opacity: 0.8 }}>
-              Calls not appearing? Fix the webhook configuration for your assistant.
-            </p>
-            <button
-              onClick={async () => {
-                if (!firm?.id) return;
-                
-                setFixingWebhook(true);
-                setFixWebhookError(null);
-                setFixWebhookSuccess(false);
-
-                try {
-                  const response = await fetch('/api/vapi/fix-assistant-webhook', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ firmId: firm.id }),
-                  });
-
-                  const data = await response.json();
-
-                  if (!response.ok) {
-                    throw new Error(data.error || 'Failed to fix webhook');
-                  }
-
-                  setFixWebhookSuccess(true);
-                  setTimeout(() => setFixWebhookSuccess(false), 5000);
-                } catch (err: any) {
-                  setFixWebhookError(err.message || 'Failed to fix webhook');
-                  setTimeout(() => setFixWebhookError(null), 5000);
-                } finally {
-                  setFixingWebhook(false);
-                }
-              }}
-              disabled={fixingWebhook}
-              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: fixingWebhook ? '#9CA3AF' : '#0B1F3B',
-                color: '#FFFFFF',
-              }}
-            >
-              {fixingWebhook ? 'Fixing...' : 'Fix Webhook Configuration'}
-            </button>
-            {fixWebhookSuccess && (
-              <p className="mt-2 text-sm" style={{ color: '#10B981' }}>
-                <span>✅ Webhook fixed successfully! Try making a call now.</span>
-              </p>
-            )}
-            {fixWebhookError && (
-              <p className="mt-2 text-sm" style={{ color: '#EF4444' }}>
-                <span>❌ {fixWebhookError}</span>
-              </p>
-            )}
-          </div>
         )}
       </div>
     );

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useRef, useState, useMemo } from 'react';
 import { createBrowserClient } from '@/lib/clients/supabase';
+import { PLAN_LIMITS } from '@/lib/constants/plans';
 
 function LandingPageContent() {
   const [isVisible, setIsVisible] = useState<Record<string, boolean>>({});
@@ -225,16 +226,37 @@ function LandingPageContent() {
                   Go to Dashboard
                 </Link>
               ) : (
-                <Link
-                  href="/login"
+                <button
+                  onClick={async () => {
+                    if (!isAuthenticated) {
+                      window.location.href = '/login?trial=starter';
+                      return;
+                    }
+                    try {
+                      const response = await fetch('/api/stripe/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plan: 'starter', trial: true }),
+                      });
+                      const data = await response.json();
+                      if (data.url) {
+                        window.location.href = data.url;
+                      } else {
+                        alert('Failed to start free trial. Please try again.');
+                      }
+                    } catch (error) {
+                      console.error('Error starting free trial:', error);
+                      alert('Failed to start free trial. Please try again.');
+                    }
+                  }}
                   className="px-6 py-3 rounded-lg text-base font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 text-white hover:[background-color:#0A1A33] cursor-pointer text-center flex items-center justify-center"
                   style={{ backgroundColor: '#0B1F3B' }}
                 >
                   Start Free Trial - No Credit Card
-                </Link>
+                </button>
               )}
               <a
-                href="tel:+14482185476"
+                href="tel:+16403561874"
                 className="inline-flex flex-col items-center justify-center gap-1 px-6 py-3 rounded-lg text-base font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 cursor-pointer group text-white"
                 style={{ 
                   backgroundColor: '#C9A24D',
@@ -255,7 +277,7 @@ function LandingPageContent() {
                       d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                     />
                   </svg>
-                  <span className="font-bold">+1 (448) 218-5476</span>
+                  <span className="font-bold">+1 (640) 356-1874</span>
                 </div>
               </a>
             </div>
@@ -481,33 +503,33 @@ function LandingPageContent() {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                name: 'Starter',
-                price: '$49',
+                name: PLAN_LIMITS.starter.name,
+                price: `$${PLAN_LIMITS.starter.price}`,
                 period: '/month',
-                minutes: '60 minutes',
-                approxCalls: '~30 calls',
+                minutes: `${PLAN_LIMITS.starter.minutesPerMonth} minutes`,
+                approxCalls: `~${PLAN_LIMITS.starter.approxCalls} calls`,
                 desc: 'Best to begin with',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings'],
                 cta: 'Get Started',
                 featured: false
               },
               {
-                name: 'Professional',
-                price: '$149',
+                name: PLAN_LIMITS.professional.name,
+                price: `$${PLAN_LIMITS.professional.price}`,
                 period: '/month',
-                minutes: '200 minutes',
-                approxCalls: '~100 calls',
+                minutes: `${PLAN_LIMITS.professional.minutesPerMonth} minutes`,
+                approxCalls: `~${PLAN_LIMITS.professional.approxCalls} calls`,
                 desc: 'Best for single attorney',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Priority support', 'Advanced analytics'],
                 cta: 'Get Started',
                 featured: true
               },
               {
-                name: 'Turbo',
-                price: '$499',
+                name: PLAN_LIMITS.turbo.name,
+                price: `$${PLAN_LIMITS.turbo.price}`,
                 period: '/month',
-                minutes: '1000 minutes',
-                approxCalls: '~500 calls',
+                minutes: `${PLAN_LIMITS.turbo.minutesPerMonth} minutes`,
+                approxCalls: `~${PLAN_LIMITS.turbo.approxCalls} calls`,
                 desc: 'For bigger firms',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Dedicated support', 'Custom integrations'],
                 cta: 'Get Started',
@@ -650,13 +672,34 @@ function LandingPageContent() {
               Go to Dashboard
             </Link>
           ) : (
-            <Link
-              href="/login"
+            <button
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  window.location.href = '/login?trial=starter';
+                  return;
+                }
+                try {
+                  const response = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: 'starter', trial: true }),
+                  });
+                  const data = await response.json();
+                  if (data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    alert('Failed to start free trial. Please try again.');
+                  }
+                } catch (error) {
+                  console.error('Error starting free trial:', error);
+                  alert('Failed to start free trial. Please try again.');
+                }
+              }}
               className="px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg inline-block bg-[#F5F3ED] hover:bg-[#EDE9E0] hover:scale-105 hover:shadow-xl cursor-pointer"
               style={{ color: '#0B1F3B' }}
             >
               Start Your Free Trial
-            </Link>
+            </button>
           )}
         </div>
       </section>

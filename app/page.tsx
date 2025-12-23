@@ -510,7 +510,9 @@ function LandingPageContent() {
                 approxCalls: `~${PLAN_LIMITS.starter.approxCalls} calls`,
                 desc: 'Best to begin with',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings'],
-                cta: 'Get Started',
+                cta: 'Start Free Trial',
+                planKey: 'starter',
+                isTrial: true,
                 featured: false
               },
               {
@@ -522,6 +524,8 @@ function LandingPageContent() {
                 desc: 'Best for single attorney',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Priority support', 'Advanced analytics'],
                 cta: 'Get Started',
+                planKey: 'professional',
+                isTrial: false,
                 featured: true
               },
               {
@@ -533,6 +537,8 @@ function LandingPageContent() {
                 desc: 'For bigger firms',
                 features: ['24/7 AI agent', 'Email summaries', 'Call recordings', 'Dedicated support', 'Custom integrations'],
                 cta: 'Get Started',
+                planKey: 'turbo',
+                isTrial: false,
                 featured: false
               }
             ].map((plan, index) => (
@@ -601,7 +607,10 @@ function LandingPageContent() {
                             headers: {
                               'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ plan: plan.name.toLowerCase() }),
+                            body: JSON.stringify({ 
+                              plan: plan.planKey || plan.name.toLowerCase(),
+                              trial: plan.isTrial || false
+                            }),
                           });
                           const data = await response.json();
                           if (data.url) {
@@ -624,17 +633,33 @@ function LandingPageContent() {
                       {plan.cta}
                     </button>
                   ) : (
-                    <Link
-                      href="/login"
-                      className={`block w-full px-6 py-3 rounded-lg text-center font-semibold transition-all duration-300 hover:scale-105 cursor-pointer ${
-                        plan.featured 
-                          ? 'text-white hover:[background-color:#0A1A33]' 
-                          : 'border-2 hover:[background-color:#F5F7FA]'
-                      }`}
-                      style={plan.featured ? { backgroundColor: '#0B1F3B' } : { color: '#0B1F3B', borderColor: '#0B1F3B' }}
-                    >
-                      {plan.cta}
-                    </Link>
+                    plan.isTrial ? (
+                      <button
+                        onClick={() => {
+                          window.location.href = '/login?trial=starter';
+                        }}
+                        className={`block w-full px-6 py-3 rounded-lg text-center font-semibold transition-all duration-300 hover:scale-105 cursor-pointer ${
+                          plan.featured 
+                            ? 'text-white hover:[background-color:#0A1A33]' 
+                            : 'border-2 hover:[background-color:#F5F7FA]'
+                        }`}
+                        style={plan.featured ? { backgroundColor: '#0B1F3B' } : { color: '#0B1F3B', borderColor: '#0B1F3B' }}
+                      >
+                        {plan.cta}
+                      </button>
+                    ) : (
+                      <Link
+                        href="/login"
+                        className={`block w-full px-6 py-3 rounded-lg text-center font-semibold transition-all duration-300 hover:scale-105 cursor-pointer ${
+                          plan.featured 
+                            ? 'text-white hover:[background-color:#0A1A33]' 
+                            : 'border-2 hover:[background-color:#F5F7FA]'
+                        }`}
+                        style={plan.featured ? { backgroundColor: '#0B1F3B' } : { color: '#0B1F3B', borderColor: '#0B1F3B' }}
+                      >
+                        {plan.cta}
+                      </Link>
+                    )
                   )}
             </div>
               </div>

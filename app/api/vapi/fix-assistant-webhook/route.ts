@@ -28,11 +28,17 @@ export async function POST(req: NextRequest) {
     // Verify user owns the firm
     const { data: firmData, error: firmError } = await supabase
       .from('firms')
-      .select('id, firm_name, vapi_assistant_id')
+      .select('id, firm_name, vapi_assistant_id, owner_user_id')
       .eq('id', firmId)
       .single();
 
-    if (firmError || !firmData || (firmData as any).owner_user_id !== session.user.id) {
+    if (firmError || !firmData) {
+      console.error('[Fix Assistant] Firm lookup error:', firmError);
+      return NextResponse.json({ error: 'Firm not found' }, { status: 404 });
+    }
+
+    if ((firmData as any).owner_user_id !== session.user.id) {
+      console.error('[Fix Assistant] Ownership mismatch. Firm owner:', (firmData as any).owner_user_id, 'Session user:', session.user.id);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

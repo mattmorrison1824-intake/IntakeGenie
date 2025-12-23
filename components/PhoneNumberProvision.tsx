@@ -135,12 +135,12 @@ export default function PhoneNumberProvision({ firm, onProvisioned }: PhoneNumbe
             </button>
             {fixWebhookSuccess && (
               <p className="mt-2 text-sm" style={{ color: '#10B981' }}>
-                ✅ Webhook fixed successfully! Try making a call now.
+                <span>✅ Webhook fixed successfully! Try making a call now.</span>
               </p>
             )}
             {fixWebhookError && (
               <p className="mt-2 text-sm" style={{ color: '#EF4444' }}>
-                ❌ {fixWebhookError}
+                <span>❌ {fixWebhookError}</span>
               </p>
             )}
           </div>

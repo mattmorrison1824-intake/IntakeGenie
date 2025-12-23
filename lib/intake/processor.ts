@@ -221,6 +221,11 @@ async function finalizeCallRecord(
   phoneNumber?: string,
   recordingUrl?: string
 ) {
+  // Check if email was already sent to prevent duplicates
+  if (call.status === 'emailed') {
+    console.log('[Finalize Call] Email already sent for call:', call.id, '- skipping email');
+    return;
+  }
 
   // Update call with transcript, intake data, caller number, recording URL, and end time
   const updateData: any = {
@@ -245,6 +250,20 @@ async function finalizeCallRecord(
   if (updateError) {
     console.error('[Finalize Call] Error updating call:', updateError);
   }
+
+  // Fetch the latest call record to ensure we have the most up-to-date recording URL
+  const { data: updatedCall, error: fetchError } = await supabase
+    .from('calls')
+    .select('*, firms(*)')
+    .eq('id', call.id)
+    .single();
+
+  if (fetchError) {
+    console.error('[Finalize Call] Error fetching updated call:', fetchError);
+  }
+
+  // Use the updated call record if available, otherwise use the original
+  const currentCall = (updatedCall as any) || call;
 
   // Generate summary
   let summary: SummaryData;
@@ -284,23 +303,41 @@ async function finalizeCallRecord(
   }
 
   // Send email
-  const firm = call.firms as any;
+  const firm = currentCall.firms as any;
   if (firm && firm.notify_emails && firm.notify_emails.length > 0) {
+    // Double-check status before sending (race condition protection)
+    const { data: statusCheck } = await supabase
+      .from('calls')
+      .select('status')
+      .eq('id', call.id)
+      .single();
+
+    if ((statusCheck as any)?.status === 'emailed') {
+      console.log('[Finalize Call] Email already sent (race condition check) for call:', call.id, '- skipping email');
+      return;
+    }
+
+    // Get the most up-to-date recording URL from the database
+    const finalRecordingUrl = recordingUrl || currentCall.recording_url || call.recording_url || null;
+    
+    console.log('[Finalize Call] Sending email with recording URL:', finalRecordingUrl ? 'Yes' : 'No');
+    
     try {
       await sendIntakeEmail(
         firm.notify_emails,
         intake,
         summary,
         transcript || null,
-        recordingUrl || call.recording_url || null, // Use recording URL if available
-        call.urgency as UrgencyLevel,
-        call.from_number || phoneNumber // Pass caller's phone number from call metadata
+        finalRecordingUrl, // Use the most up-to-date recording URL
+        currentCall.urgency as UrgencyLevel,
+        currentCall.from_number || phoneNumber // Pass caller's phone number from call metadata
       );
       await supabase
         .from('calls')
         // @ts-ignore
         .update({ status: 'emailed' })
         .eq('id', call.id);
+      console.log('[Finalize Call] Email sent successfully for call:', call.id);
     } catch (error) {
       console.error('[Intake Processor] Email sending failed:', error);
       await supabase

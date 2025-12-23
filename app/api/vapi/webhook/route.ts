@@ -125,6 +125,10 @@ export async function POST(req: NextRequest) {
       phoneNumber = body.phoneNumber;
       metadata = body.metadata;
       phoneNumberId = body.phoneNumberId;
+      // Extract recording URL from old format
+      if (!recordingUrl) {
+        recordingUrl = body.recordingUrl || body.recording?.url || body.recording_url;
+      }
       
       console.log('[Vapi Webhook] ========== WEBHOOK RECEIVED (OLD FORMAT) ==========');
     }
@@ -522,6 +526,10 @@ export async function POST(req: NextRequest) {
       }
       
       try {
+        console.log('[Vapi Webhook] Finalizing call with recording URL:', finalRecordingUrl ? 'Yes' : 'No');
+        if (finalRecordingUrl) {
+          console.log('[Vapi Webhook] Recording URL:', finalRecordingUrl);
+        }
         await finalizeCall({
           conversationId: conversation_id,
           transcript: finalTranscript,

@@ -39,8 +39,9 @@ function extractCallerInfo(
 
   // Try to extract name from summary title if it contains a name
   if (!name && summary.title) {
-    // Pattern: "Work Injury Intake - Johnson Smith" or "Intake Call - John Doe"
-    const titleMatch = summary.title.match(/(?:Intake|Call|Injury)\s+[^-]+\s*-\s*([A-Z][a-zA-Z\s]+?)(?:\s*—|$)/i);
+    // Pattern: "Car Accident Intake - John Smith the Third" or "Work Injury Intake - Johnson Smith" or "Intake Call - John Doe"
+    // Match anything before dash (category) and after dash (name) - name should start with capital letter
+    const titleMatch = summary.title.match(/[^-]+\s*-\s*([A-Z][a-zA-Z\s]+?)(?:\s*[—\-]|$)/);
     if (titleMatch && titleMatch[1]) {
       name = titleMatch[1].trim();
     }

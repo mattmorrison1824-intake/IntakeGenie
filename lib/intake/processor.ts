@@ -228,15 +228,24 @@ async function finalizeCallRecord(
   }
 
   // Update call with transcript, intake data, caller number, recording URL, and end time
-  // Preserve existing recording_url if new one is not provided
+  // Use new recording URL if provided (even if empty string), otherwise preserve existing one
   const updateData: any = {
     transcript_text: transcript || call.transcript_text || null,
     from_number: phoneNumber || call.from_number || '',
-    // Only update recording_url if we have a new one, otherwise preserve existing
-    recording_url: recordingUrl || call.recording_url || null,
+    // Use recordingUrl if it's a non-empty string, otherwise preserve existing
+    recording_url: (recordingUrl && recordingUrl.trim()) ? recordingUrl : (call.recording_url || null),
     ended_at: new Date().toISOString(),
     status: 'summarizing',
   };
+  
+  // Log recording URL update for debugging
+  if (recordingUrl) {
+    console.log('[Finalize Call] Updating recording URL:', recordingUrl);
+  } else if (call.recording_url) {
+    console.log('[Finalize Call] Preserving existing recording URL:', call.recording_url);
+  } else {
+    console.log('[Finalize Call] No recording URL available');
+  }
   
   // Update intake_json if we have intake data
   if (intake && Object.keys(intake).length > 0) {

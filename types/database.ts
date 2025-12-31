@@ -69,7 +69,7 @@ export interface Database {
           started_at: string;
           ended_at: string | null;
           route_reason: 'after_hours' | 'no_answer' | 'manual_test';
-          status: 'in_progress' | 'transcribing' | 'summarizing' | 'emailed' | 'error';
+          status: 'in_progress' | 'transcribing' | 'summarizing' | 'sending_email' | 'emailed' | 'error';
           urgency: 'normal' | 'high' | 'emergency_redirected';
           recording_url: string | null;
           transcript_text: string | null;
@@ -86,7 +86,7 @@ export interface Database {
           started_at?: string;
           ended_at?: string | null;
           route_reason: 'after_hours' | 'no_answer' | 'manual_test';
-          status?: 'in_progress' | 'transcribing' | 'summarizing' | 'emailed' | 'error';
+          status?: 'in_progress' | 'transcribing' | 'summarizing' | 'sending_email' | 'emailed' | 'error';
           urgency?: 'normal' | 'high' | 'emergency_redirected';
           recording_url?: string | null;
           transcript_text?: string | null;
@@ -103,7 +103,7 @@ export interface Database {
           started_at?: string;
           ended_at?: string | null;
           route_reason?: 'after_hours' | 'no_answer' | 'manual_test';
-          status?: 'in_progress' | 'transcribing' | 'summarizing' | 'emailed' | 'error';
+          status?: 'in_progress' | 'transcribing' | 'summarizing' | 'sending_email' | 'emailed' | 'error';
           urgency?: 'normal' | 'high' | 'emergency_redirected';
           recording_url?: string | null;
           transcript_text?: string | null;

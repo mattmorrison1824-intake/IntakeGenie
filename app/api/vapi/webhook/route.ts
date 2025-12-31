@@ -109,6 +109,14 @@ export async function POST(req: NextRequest) {
         recordingUrl = message.recording.url;
       } else if (message.report?.recordingUrl) {
         recordingUrl = message.report.recordingUrl;
+      } else if (message.call?.recordingUrl) {
+        recordingUrl = message.call.recordingUrl;
+      } else if (message.call?.recording?.url) {
+        recordingUrl = message.call.recording.url;
+      }
+      
+      if (recordingUrl) {
+        console.log('[Vapi Webhook] Extracted recording URL from webhook:', recordingUrl);
       }
       
       console.log('[Vapi Webhook] ========== WEBHOOK RECEIVED (VAPI FORMAT) ==========');
@@ -378,6 +386,27 @@ export async function POST(req: NextRequest) {
       }
       
       try {
+        // Also update recording URL if it's available in the update webhook
+        // This handles cases where recording URL comes before finalization
+        if (recordingUrl) {
+          console.log('[Vapi Webhook] Recording URL found in update webhook, updating call:', recordingUrl);
+          const { data: existingCall } = await supabase
+            .from('calls')
+            .select('id, recording_url')
+            .eq('vapi_conversation_id', conversation_id)
+            .maybeSingle();
+          
+          if (existingCall && !(existingCall as any).recording_url) {
+            // Update recording URL if call exists but doesn't have one yet
+            await supabase
+              .from('calls')
+              // @ts-ignore
+              .update({ recording_url: recordingUrl })
+              .eq('id', (existingCall as any).id);
+            console.log('[Vapi Webhook] Updated recording URL for existing call');
+          }
+        }
+        
         const result = await upsertCall({
           conversationId: conversation_id,
           firmId: firmId,
@@ -505,12 +534,23 @@ export async function POST(req: NextRequest) {
                   callData.recordingUrl ||
                   callData.recording?.url ||
                   callData.recording_url ||
+                  callData.call?.recordingUrl ||
+                  callData.call?.recording?.url ||
                   null;
               }
               
               if (finalRecordingUrl) {
                 console.log('[Vapi Webhook] Found recording URL in API response:', finalRecordingUrl);
                 fetchedData = true;
+              } else {
+                console.log('[Vapi Webhook] No recording URL found in API response. Available fields:', {
+                  hasArtifact: !!callData.artifact,
+                  hasRecording: !!callData.recording,
+                  hasCall: !!callData.call,
+                  artifactKeys: callData.artifact ? Object.keys(callData.artifact) : [],
+                  callKeys: callData.call ? Object.keys(callData.call) : [],
+                  topLevelKeys: Object.keys(callData),
+                });
               }
             }
             

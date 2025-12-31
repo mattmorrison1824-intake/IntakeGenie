@@ -3,7 +3,7 @@
 // Deprecated - no longer used, kept for backward compatibility
 export type RoutingMode = 'after_hours' | 'failover' | 'both';
 
-export type CallStatus = 'in_progress' | 'transcribing' | 'summarizing' | 'emailed' | 'error';
+export type CallStatus = 'in_progress' | 'transcribing' | 'summarizing' | 'sending_email' | 'emailed' | 'error';
 
 export type UrgencyLevel = 'normal' | 'high' | 'emergency_redirected';
 

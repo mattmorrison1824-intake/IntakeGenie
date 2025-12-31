@@ -221,16 +221,18 @@ async function finalizeCallRecord(
   phoneNumber?: string,
   recordingUrl?: string
 ) {
-  // Check if email was already sent to prevent duplicates
+  // Early exit if already emailed (quick check)
   if (call.status === 'emailed') {
     console.log('[Finalize Call] Email already sent for call:', call.id, '- skipping email');
     return;
   }
 
   // Update call with transcript, intake data, caller number, recording URL, and end time
+  // Preserve existing recording_url if new one is not provided
   const updateData: any = {
-    transcript_text: transcript || null,
+    transcript_text: transcript || call.transcript_text || null,
     from_number: phoneNumber || call.from_number || '',
+    // Only update recording_url if we have a new one, otherwise preserve existing
     recording_url: recordingUrl || call.recording_url || null,
     ended_at: new Date().toISOString(),
     status: 'summarizing',
@@ -251,7 +253,7 @@ async function finalizeCallRecord(
     console.error('[Finalize Call] Error updating call:', updateError);
   }
 
-  // Fetch the latest call record to ensure we have the most up-to-date recording URL
+  // Fetch the latest call record to ensure we have the most up-to-date data
   const { data: updatedCall, error: fetchError } = await supabase
     .from('calls')
     .select('*, firms(*)')
@@ -302,18 +304,28 @@ async function finalizeCallRecord(
       .eq('id', call.id);
   }
 
-  // Send email
+  // Send email - use atomic UPDATE to prevent race conditions
   const firm = currentCall.firms as any;
   if (firm && firm.notify_emails && firm.notify_emails.length > 0) {
-    // Double-check status before sending (race condition protection)
-    const { data: statusCheck } = await supabase
+    // Use atomic UPDATE: only update status to 'sending_email' if it's NOT already 'emailed'
+    // This prevents duplicate emails in race conditions
+    // If status is already 'emailed', this update will affect 0 rows
+    const { data: lockResult, error: lockError } = await supabase
       .from('calls')
-      .select('status')
+      // @ts-ignore
+      .update({ status: 'sending_email' })
       .eq('id', call.id)
-      .single();
+      .neq('status', 'emailed')
+      .select('id, status')
+      .maybeSingle();
 
-    if ((statusCheck as any)?.status === 'emailed') {
-      console.log('[Finalize Call] Email already sent (race condition check) for call:', call.id, '- skipping email');
+    // If lockResult is null, the update didn't match any rows (status was already 'emailed')
+    // If lockError exists, there was a database error
+    if (!lockResult || lockError) {
+      if (lockError && lockError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected if already emailed
+        console.error('[Finalize Call] Error in atomic lock check:', lockError);
+      }
+      console.log('[Finalize Call] Email already sent (atomic check - status was already emailed) for call:', call.id, '- skipping email');
       return;
     }
 
@@ -321,6 +333,9 @@ async function finalizeCallRecord(
     const finalRecordingUrl = recordingUrl || currentCall.recording_url || call.recording_url || null;
     
     console.log('[Finalize Call] Sending email with recording URL:', finalRecordingUrl ? 'Yes' : 'No');
+    if (finalRecordingUrl) {
+      console.log('[Finalize Call] Recording URL:', finalRecordingUrl);
+    }
     
     try {
       await sendIntakeEmail(
@@ -332,14 +347,17 @@ async function finalizeCallRecord(
         currentCall.urgency as UrgencyLevel,
         currentCall.from_number || phoneNumber // Pass caller's phone number from call metadata
       );
+      // Mark as emailed only after successful email send
       await supabase
         .from('calls')
         // @ts-ignore
         .update({ status: 'emailed' })
-        .eq('id', call.id);
+        .eq('id', call.id)
+        .eq('status', 'sending_email'); // Only update if still in 'sending_email' state (extra safety)
       console.log('[Finalize Call] Email sent successfully for call:', call.id);
     } catch (error) {
       console.error('[Intake Processor] Email sending failed:', error);
+      // Reset status on error so it can be retried
       await supabase
         .from('calls')
         // @ts-ignore

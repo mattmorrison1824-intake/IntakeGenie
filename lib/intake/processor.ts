@@ -232,13 +232,31 @@ async function finalizeCallRecord(
 
   // Update call with transcript, intake data, caller number, recording URL, and end time
   // Use new recording URL if provided (even if empty string), otherwise preserve existing one
-  // Use provided endedAt if available, otherwise use current time (for backwards compatibility)
+  // Use provided endedAt if available and valid (after started_at), otherwise preserve existing or use current time
+  let finalEndedAt = endedAt || call.ended_at || new Date().toISOString();
+  
+  // Validate that ended_at is after started_at
+  if (call.started_at) {
+    const startTime = new Date(call.started_at).getTime();
+    const endTime = new Date(finalEndedAt).getTime();
+    
+    // If the end time is before start time or invalid, use current time instead
+    if (isNaN(endTime) || endTime < startTime) {
+      console.warn('[Finalize Call] Invalid ended_at (before started_at), using current time instead:', {
+        started_at: call.started_at,
+        provided_ended_at: endedAt,
+        current_ended_at: call.ended_at,
+      });
+      finalEndedAt = new Date().toISOString();
+    }
+  }
+  
   const updateData: any = {
     transcript_text: transcript || call.transcript_text || null,
     from_number: phoneNumber || call.from_number || '',
     // Use recordingUrl if it's a non-empty string, otherwise preserve existing
     recording_url: (recordingUrl && recordingUrl.trim()) ? recordingUrl : (call.recording_url || null),
-    ended_at: endedAt || call.ended_at || new Date().toISOString(),
+    ended_at: finalEndedAt,
     status: 'summarizing',
   };
   

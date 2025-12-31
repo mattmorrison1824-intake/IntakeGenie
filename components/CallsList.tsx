@@ -50,7 +50,14 @@ export default function CallsList({ calls, searchParams }: CallsListProps) {
     if (!endedAt) return 'Ongoing';
     const start = new Date(startedAt).getTime();
     const end = new Date(endedAt).getTime();
+    
+    // Handle invalid dates or negative duration
+    if (isNaN(start) || isNaN(end) || end < start) {
+      return 'N/A';
+    }
+    
     const seconds = Math.floor((end - start) / 1000);
+    if (seconds < 0) return 'N/A';
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;

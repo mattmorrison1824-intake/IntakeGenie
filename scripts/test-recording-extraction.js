@@ -85,7 +85,7 @@ function extractRecordingUrl(callData) {
     }
   }
   // Fallback locations
-  } else if (callData.recordingUrl) {
+  else if (callData.recordingUrl) {
     recordingUrl = callData.recordingUrl;
   } else if (callData.recording?.url) {
     recordingUrl = callData.recording.url;

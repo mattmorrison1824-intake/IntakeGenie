@@ -416,13 +416,22 @@ async function finalizeCallRecord(
         currentCall.from_number || phoneNumber // Pass caller's phone number from call metadata
       );
       // Mark as emailed only after successful email send
-      await supabase
+      // Update unconditionally - we acquired the lock, email was sent, so mark as emailed
+      const { data: updateResult, error: updateError } = await supabase
         .from('calls')
         // @ts-ignore
         .update({ status: 'emailed' })
         .eq('id', call.id)
-        .eq('status', 'sending_email'); // Only update if still in 'sending_email' state (extra safety)
-      console.log('[Finalize Call] Email sent successfully for call:', call.id);
+        .select('id, status')
+        .maybeSingle();
+      
+      if (updateError) {
+        console.error('[Finalize Call] Error updating status to emailed:', updateError);
+      } else if (!updateResult) {
+        console.warn('[Finalize Call] Update to emailed returned no rows for call:', call.id);
+      } else {
+        console.log('[Finalize Call] Email sent successfully and status updated to emailed for call:', call.id);
+      }
     } catch (error) {
       console.error('[Intake Processor] Email sending failed:', error);
       // Reset status on error so it can be retried - only if still in 'sending_email' state

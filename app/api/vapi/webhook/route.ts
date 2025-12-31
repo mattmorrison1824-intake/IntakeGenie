@@ -96,13 +96,25 @@ export async function POST(req: NextRequest) {
       }
       
       // Extract recording URL from various locations
-      // According to Vapi docs, recording is in artifact.recording (not recordingUrl)
+      // According to Vapi docs: https://docs.vapi.ai/assistants/call-recording
+      // Recording is in artifact.recording - can be a string (URL) or object with url property
+      // Check message.artifact.recording first (primary location)
       if (message.artifact?.recording) {
         recordingUrl = typeof message.artifact.recording === 'string' 
           ? message.artifact.recording 
           : message.artifact.recording.url || message.artifact.recording.recordingUrl;
-      } else if (message.artifact?.recordingUrl) {
+      } 
+      // Also check call.artifact.recording (webhook might have call object with artifact)
+      else if (message.call?.artifact?.recording) {
+        recordingUrl = typeof message.call.artifact.recording === 'string'
+          ? message.call.artifact.recording
+          : message.call.artifact.recording.url || message.call.artifact.recording.recordingUrl;
+      }
+      // Fallback to other locations
+      else if (message.artifact?.recordingUrl) {
         recordingUrl = message.artifact.recordingUrl;
+      } else if (message.call?.artifact?.recordingUrl) {
+        recordingUrl = message.call.artifact.recordingUrl;
       } else if (message.recordingUrl) {
         recordingUrl = message.recordingUrl;
       } else if (message.recording?.url) {
@@ -117,6 +129,13 @@ export async function POST(req: NextRequest) {
       
       if (recordingUrl) {
         console.log('[Vapi Webhook] Extracted recording URL from webhook:', recordingUrl);
+      } else {
+        console.log('[Vapi Webhook] No recording URL found in webhook message. Available paths:', {
+          hasMessageArtifact: !!message.artifact,
+          hasCallArtifact: !!message.call?.artifact,
+          messageArtifactKeys: message.artifact ? Object.keys(message.artifact) : [],
+          callArtifactKeys: message.call?.artifact ? Object.keys(message.call.artifact) : [],
+        });
       }
       
       console.log('[Vapi Webhook] ========== WEBHOOK RECEIVED (VAPI FORMAT) ==========');

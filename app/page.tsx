@@ -190,7 +190,7 @@ function LandingPageContent() {
                   animation: 'gradient-shift 3s ease infinite'
                 }}
               >
-                Legal Lead Again
+                Lead Again
               </span>
             </h1>
             <p 

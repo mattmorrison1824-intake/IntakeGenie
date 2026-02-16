@@ -738,7 +738,7 @@ function LandingPageContent() {
               alt="IntakeGenie" 
               className="h-8 w-auto mx-auto mb-4 transition-transform duration-300 hover:scale-110"
             />
-            <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Never miss a legal lead again.</p>
+            <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Never miss a lead again.</p>
             <div className="flex justify-center space-x-6">
               {isAuthenticated ? (
                 <Link 

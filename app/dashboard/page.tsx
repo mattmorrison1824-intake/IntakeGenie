@@ -179,7 +179,7 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A5D73' }}>
-                    Firm Name
+                    Company Name
                       </div>
                   <div className="text-2xl font-bold" style={{ color: '#0B1F3B' }}>
                     {(firm as any).firm_name}
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
                 firm={firm}
               />
 
-              {/* Firm Settings Summary */}
+              {/* Company Settings Summary */}
               <div 
                 className="bg-white rounded-xl shadow-sm p-8"
                 style={{
@@ -211,10 +211,10 @@ export default async function DashboardPage() {
               >
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold mb-1" style={{ color: '#4A5D73' }}>
-                    Firm Settings Summary
+                    Company Settings Summary
                   </h2>
                   <p className="text-sm" style={{ color: '#4A5D73', opacity: 0.7 }}>
-                    Current configuration for your firm
+                    Current configuration for your Company
                   </p>
               </div>
                 <div className="grid gap-6 md:grid-cols-2 border-b border-gray-200 pb-6 mb-6">

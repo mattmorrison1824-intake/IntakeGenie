@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IntakeGenie - Legal Intake Voice Agent",
-  description: "After-hours and no-answer legal intake voice agent for law firms",
+  title: "IntakeGenie - 24/7 Intake Voice Agent",
+  description: "After-hours and no-answer intake voice agent for businesses ",
   icons: {
     icon: '/icon.png',
     apple: '/icon.png',

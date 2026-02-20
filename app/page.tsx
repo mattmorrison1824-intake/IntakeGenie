@@ -11,7 +11,7 @@ function LandingPageContent() {
   const [typedText, setTypedText] = useState('');
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
   
-  const fullText = "AI-powered voice agent trained on your company's knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
+  const fullText = "AI-powered voice agent trained on your company/'s knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return createBrowserClient();
@@ -311,7 +311,7 @@ function LandingPageContent() {
         >
             <h2 className="text-4xl font-bold mb-4" style={{ color: '#0B1F3B' }}>Turn Missed Calls Into Clients</h2>
           <p className="text-xl max-w-2xl mx-auto" style={{ color: '#4A5D73' }}>
-            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your company's expertise for personalized, accurate responses. Every call becomes an opportunity.
+            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your company/'s expertise for personalized, accurate responses. Every call becomes an opportunity.
           </p>
         </div>
 
@@ -335,7 +335,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Structured Intake',
-              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your company's custom knowledge base.',
+              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your company/'s custom knowledge base.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 100
             },
@@ -380,7 +380,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Custom Knowledge Base',
-              description: 'Train the AI with your company's specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
+              description: 'Train the AI with your company/'s specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 500
             }
@@ -431,7 +431,7 @@ function LandingPageContent() {
             {[
               { num: '1', title: 'Call Comes In', desc: 'Caller dials your company number during or after business hours' },
               { num: '2', title: 'Smart Routing', desc: 'System routes to your team if available, or to AI agent if busy/closed' },
-              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your company's knowledge base to conduct professional intake conversation, collecting all essential details' },
+              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your company/'s knowledge base to conduct professional intake conversation, collecting all essential details' },
               { num: '4', title: 'Instant Delivery', desc: 'Receive formatted email with summary, transcript, and recording link' }
             ].map((step, index) => (
               <div

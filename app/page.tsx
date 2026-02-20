@@ -11,7 +11,7 @@ function LandingPageContent() {
   const [typedText, setTypedText] = useState('');
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
   
-  const fullText = "AI-powered voice agent trained on your company\'s knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
+  const fullText = "AI-powered voice agent trained on your company's knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return createBrowserClient();

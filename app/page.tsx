@@ -311,7 +311,7 @@ function LandingPageContent() {
         >
             <h2 className="text-4xl font-bold mb-4" style={{ color: '#0B1F3B' }}>Turn Missed Calls Into Clients</h2>
           <p className="text-xl max-w-2xl mx-auto" style={{ color: '#4A5D73' }}>
-            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your company/'s expertise for personalized, accurate responses. Every call becomes an opportunity.
+            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your company\'s expertise for personalized, accurate responses. Every call becomes an opportunity.
           </p>
         </div>
 
@@ -335,7 +335,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Structured Intake',
-              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your company/'s custom knowledge base.',
+              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your company\'s custom knowledge base.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 100
             },

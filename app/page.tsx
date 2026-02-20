@@ -11,7 +11,7 @@ function LandingPageContent() {
   const [typedText, setTypedText] = useState('');
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
   
-  const fullText = "AI-powered voice agent trained on your company/'s knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
+  const fullText = "AI-powered voice agent trained on your company\'s knowledge base. Captures intake information when your office is busy or closed. Get structured summaries delivered to your inbox instantly.";
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return createBrowserClient();
@@ -380,7 +380,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Custom Knowledge Base',
-              description: 'Train the AI with your company/'s specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
+              description: 'Train the AI with your company\'s specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 500
             }
@@ -431,7 +431,7 @@ function LandingPageContent() {
             {[
               { num: '1', title: 'Call Comes In', desc: 'Caller dials your company number during or after business hours' },
               { num: '2', title: 'Smart Routing', desc: 'System routes to your team if available, or to AI agent if busy/closed' },
-              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your company/'s knowledge base to conduct professional intake conversation, collecting all essential details' },
+              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your company\'s knowledge base to conduct professional intake conversation, collecting all essential details' },
               { num: '4', title: 'Instant Delivery', desc: 'Receive formatted email with summary, transcript, and recording link' }
             ].map((step, index) => (
               <div

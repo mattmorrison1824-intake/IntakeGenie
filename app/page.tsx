@@ -311,7 +311,7 @@ function LandingPageContent() {
         >
             <h2 className="text-4xl font-bold mb-4" style={{ color: '#0B1F3B' }}>Turn Missed Calls Into Clients</h2>
           <p className="text-xl max-w-2xl mx-auto" style={{ color: '#4A5D73' }}>
-            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your firm's expertise for personalized, accurate responses. Every call becomes an opportunity.
+            Capture leads 24/7 with intelligent routing and automated intake collection. Train the AI with your company's expertise for personalized, accurate responses. Every call becomes an opportunity.
           </p>
         </div>
 
@@ -335,7 +335,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Structured Intake',
-              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your firm\'s custom knowledge base.',
+              description: 'Collects all essential information: contact details, incident information, injuries, treatment status, and more in a structured format. Powered by your company's custom knowledge base.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 100
             },
@@ -356,8 +356,8 @@ function LandingPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               ),
-              title: 'Emergency Detection',
-              description: 'Automatically detects emergencies and directs callers to 911, while flagging urgent cases for immediate attention.',
+              title: 'Escalation Detection',
+              description: 'Automatically detects escalations and directs callers to your team, while flagging urgent items for immediate attention.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 300
             },
@@ -380,7 +380,7 @@ function LandingPageContent() {
                 </svg>
               ),
               title: 'Custom Knowledge Base',
-              description: 'Train the AI with your firm\'s specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
+              description: 'Train the AI with your company's specific information, practice areas, and procedures. The agent learns your expertise to provide accurate, personalized responses.',
               bgColor: 'rgba(201, 162, 77, 0.1)',
               delay: 500
             }
@@ -429,9 +429,9 @@ function LandingPageContent() {
 
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { num: '1', title: 'Call Comes In', desc: 'Caller dials your firm number during or after business hours' },
+              { num: '1', title: 'Call Comes In', desc: 'Caller dials your company number during or after business hours' },
               { num: '2', title: 'Smart Routing', desc: 'System routes to your team if available, or to AI agent if busy/closed' },
-              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your firm\'s knowledge base to conduct professional intake conversation, collecting all essential details' },
+              { num: '3', title: 'Intake Collection', desc: 'AI agent uses your company's knowledge base to conduct professional intake conversation, collecting all essential details' },
               { num: '4', title: 'Instant Delivery', desc: 'Receive formatted email with summary, transcript, and recording link' }
             ].map((step, index) => (
               <div
@@ -496,7 +496,7 @@ function LandingPageContent() {
           >
             <h2 className="text-4xl font-bold mb-4" style={{ color: '#0B1F3B' }}>Simple, Transparent Pricing</h2>
             <p className="text-xl max-w-2xl mx-auto" style={{ color: '#4A5D73' }}>
-              Choose the plan that works best for your firm
+              Choose the plan that works best for your company
             </p>
           </div>
 

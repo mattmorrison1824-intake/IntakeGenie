@@ -40,7 +40,7 @@ export default async function SettingsPage() {
                   Settings
             </h1>
             <p className="text-sm" style={{ color: '#4A5D73' }}>
-              Manage your firm configuration and preferences
+              Manage your company configuration and preferences
             </p>
               </div>
 

@@ -37,10 +37,10 @@ export default async function KnowledgeBasePage() {
         <div className="w-full max-w-[900px] px-4 py-8 rounded-xl" style={{ backgroundColor: '#F5F7FA', minHeight: 'calc(100vh - 4rem)' }}>
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: '#0B1F3B' }}>
-              Firm Knowledge Base
+              Company Knowledge Base
             </h1>
             <p className="text-sm" style={{ color: '#4A5D73' }}>
-              Provide context about your firm to help the AI assist callers effectively
+              Provide context about your company to help the AI assist callers effectively
             </p>
           </div>
 
